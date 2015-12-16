@@ -137,7 +137,6 @@ Boolean subTypeOf(ClassOrInterfaceDeclaration subType, ClassOrInterfaceDeclarati
 	return false;
 }
 
-// TODO add check options 
 
 "Parses arguments to construct given type."
 shared [T?, [String*]] parseArguments<T>([String*] arguments) 
