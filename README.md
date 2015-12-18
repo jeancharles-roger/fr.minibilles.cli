@@ -3,7 +3,7 @@ using simple annotations.
 
 Using `option` and `parameters` annotation you can simply create a CLI:
 
-```ruby
+```ceylon
 "Grep class that defines options and parameters like the unix grep command."
 parameters({`value pattern`, `value files`})
 shared class Grep(
@@ -11,7 +11,7 @@ shared class Grep(
 	shared String pattern,
 	
 	"Files where to search"
-	shared {String*} files = empty,
+	shared [String*] files = empty,
 	
 	"Print num lines of trailing context after each match.  See also the -B and -C options."
 	option("after-context", 'A') Integer afterContext = 0,
@@ -39,3 +39,8 @@ shared class Grep(
 	option("exclude") {String*} patterns = empty
 ) { }
 ```
+
+
+# Notes
+
+- Multiple parameters must be of type `Sequential`, `Iterable` isn't supported.

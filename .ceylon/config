@@ -1,7 +1,6 @@
 
-[compiler]
-source=source
-resource=resource
+[formattool]
+profile=default
 
 [defaults]
 encoding=UTF-8

@@ -95,7 +95,7 @@ parameters({`value command`, `value process`, `value processArguments`})
 class DaemonOption(
 	"Shows daemon version"
 	option("version", 'v')
-	 shared Boolean version = false,
+	shared Boolean version = false,
 	
 	"Prints this help"
 	option("help", 'h')
@@ -163,7 +163,7 @@ shared void run() {
   	value [options2,errors2] = parseArguments<DaemonOption>(process.arguments);
   	print(options2);
   	print(errors2);
-  	
+  	 	
   	/*
   	if (nonempty errors) {
   		// arguments are invalid

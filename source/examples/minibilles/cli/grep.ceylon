@@ -4,7 +4,8 @@ import minibilles.cli {
 	parseArguments
 }
 import ceylon.test {
-	test
+	test,
+	ignore
 }
 
 "Grep class that defines options and parameters like the unix grep command."
@@ -14,34 +15,51 @@ shared class Grep(
 	shared String pattern,
 	
 	"Files where to search"
-	shared {String*} files = empty,
+	//shared [String*] files = empty,
+	shared String files,
 	
 	"Print num lines of trailing context after each match.  See also the -B and -C options."
-	option("after-context", 'A') Integer afterContext = 0,
+	option("after-context", 'A')
+	shared Integer afterContext = 0,
 
 	"Print num lines of leading context before each match.  See also the -A and -C options."
-	option("before-context", 'B') Integer beforeContext = 0,
+	option("before-context", 'B') 
+	shared Integer beforeContext = 0,
 	
 	"Treat all files as ASCII text.  Normally grep will simply print \`\`Binary file ... matches'' if files contain binary characters.  Use of this option
      forces grep to output lines matching the specified pattern."
-	option("text", 'a') Boolean text = false,
+	option("text", 'a') 
+	shared Boolean text = false,
 	
 	"The offset in bytes of a matched pattern is displayed in front of the respective matched line."
-	option("byte-offset", 'b') Integer byteOffset = 0,
+	option("byte-offset", 'b') 
+	shared Integer byteOffset = 0,
 	
 	"Print num lines of leading and trailing context surrounding each match.  The default is 2 and is equivalent to -A 2 -B 2.  Note: no whitespace may be
      given between the option and its argument."
-	option("context", 'C') Integer context = 2,
+	option("context", 'C') 
+	shared Integer context = 2,
 	
 	"Only a count of selected lines is written to standard output."
-	option("count", 'c') Boolean count = false,
+	option("count", 'c') 
+	shared Boolean count = false,
 	
 	"If specified, it excludes files matching the given filename pattern from the search.  Note that --exclude patterns take priority over --include pat-
      terns, and if no --include pattern is specified, all files are searched that are not excluded.  Patterns are matched to the full path specified, not
      only to the filename component."
-	option("exclude") {String*} patterns = empty
+	option("exclude") 
+	shared [String*] patterns = empty
 ) { }
 
-shared test void testGrep1() => parseArguments(["toto", "file1.txt", "file2.txt"]);
-shared test void testGrep2() => parseArguments(["-A", "3", "toto", "file1.txt", "file2.txt"]);
-shared test void testGrep3() => parseArguments(["-A", "3", "-B", "5", "toto", "file1.txt", "file2.txt"]);
+
+
+shared test void testGrep1() => parseArguments<Grep>(["toto", "file1.txt", "file2.txt"]);
+
+shared test void testGrep2() => parseArguments<Grep>(["-A", "3", "toto", "file1.txt", "file2.txt"]);
+
+shared test void testGrep3() => parseArguments<Grep>(["-A", "3", "-B", "5", "toto", "file1.txt", "file2.txt"]);
+
+shared test void testGrep4() => parseArguments<Grep>(["-ac", "toto", "file1.txt", "file2.txt"]);
+
+ignore("Not supported yet")
+shared test void testGrep5() => parseArguments<Grep>(["-AB", "5", "toto", "file1.txt", "file2.txt"]);

@@ -18,6 +18,9 @@ import ceylon.language.meta.model {
 	Type
 }
 
+shared alias PrimiteValue => String|Integer|Float|Boolean;
+shared alias Value => PrimiteValue|[PrimiteValue*];
+
 "Annotation for an option."
 shared final annotation class OptionAnnotation(
 	shared String longName, 
@@ -73,50 +76,70 @@ shared final annotation class CreatorAnnotation(
 shared annotation CreatorAnnotation creator(FunctionDeclaration creator)
 	 => CreatorAnnotation(creator);
 
-Object?|{Object?+} parseValue(ValueDeclaration declaration, String|{String+} verbatim) {
-	switch(verbatim)
-	case (is String) { return parseOneValue(declaration, verbatim); }
-	case (is {String+}) { return { for (one in verbatim) parseOneValue(declaration, one) }; }
-}
 
-Object? parseOneValue(ValueDeclaration declaration, String verbatim) {
+// TODO adds error handling for parsing integer, float and boolean
+Anything? parseValue(ValueDeclaration declaration, String|[String+] verbatim) {
 	value annotation = annotations(`CreatorAnnotation`, declaration);
 	if (exists annotation) {
 		// uses the creator
-		value creator = annotation.creator.apply<Object, [String]>();
+		value creator = annotation.creator.apply<Object, [String|[String+]]>();
 		return creator.apply(verbatim);
 	} else {
-		// parses the verbatim
-		value childOpenType = declaration.openType;
-		assert(is OpenClassOrInterfaceType childOpenType);
-		value childType = childOpenType.declaration.apply<Anything>();
-		if (childType == `String`) {
-			return verbatim;
-		} else if (childType == `Integer`) {
-			return parseInteger(verbatim);
-		} else if (childType == `Float`) {
-			return parseFloat(verbatim);
-		} else if (childType == `Boolean`) {
-			return if (verbatim.empty) then true else parseBoolean(verbatim);
-		} else if (is ClassOrInterface<Object> childType) {
-			// searches for a case value
-			value caseValue = childType.caseValues.find((Object elem) => verbatim == elem.string);
-			if (exists caseValue) { return caseValue; } 
-			else if (is Class<Object> childType) {
-				// tries a constructor
-				value constructors = childType.getCallableConstructors<[String]>();
-				if (nonempty constructors) {
-					return constructors.first.declaration.apply<Object, [String]>().apply(verbatim);
-				} else {
-					throw Exception("No constructor([String]) found for type '``childType``' for ``declaration.name``");
-				}
+		switch (verbatim)
+		case (is String) {
+			return parseSingleValue(declaration, verbatim);
+		}
+		case (is [String+]) {
+			return parseMultipleValue(declaration, verbatim);
+		}
+	}
+}
+
+[Object*] parseMultipleValue(ValueDeclaration declaration, [String+] verbatim) {
+	// parses the verbatim
+	value childOpenType = declaration.openType;
+	assert(is OpenClassOrInterfaceType childOpenType);
+	value childType = childOpenType.declaration.apply<Anything>();
+	if (childType.subtypeOf(`Sequential<Anything>`)) {
+		return [for (single in verbatim) parseSingleValue(declaration, single)].coalesced.sequence();
+	} else {
+		throw Exception("Can't parse value '``verbatim``' for type '``childType``' in ``declaration.name``");
+	}
+}
+
+
+// TODO adds error handling for parsing integer, float and boolean
+Object? parseSingleValue(ValueDeclaration declaration, String verbatim) {
+	// parses the verbatim
+	value childOpenType = declaration.openType;
+	assert(is OpenClassOrInterfaceType childOpenType);
+	value childType = childOpenType.declaration.apply<Anything>();
+	if (childType == `String`) {
+		return verbatim;
+	} else if (childType == `Integer`) {
+		return parseInteger(verbatim);
+	} else if (childType == `Float`) {
+		return parseFloat(verbatim);
+	} else if (childType == `Boolean`) {
+		return if (verbatim.empty) then true else parseBoolean(verbatim);
+	} else if (is ClassOrInterface<Object> childType) {
+		// searches for a case value
+		value caseValue = childType.caseValues.find((Object elem) => verbatim == elem.string);
+		if (exists caseValue) { return caseValue; } 
+		else if (is Class<Object> childType) {
+			// tries a constructor
+			value constructors = childType.getCallableConstructors<[String]>();
+			if (nonempty constructors) {
+				return constructors.first.declaration.apply<Object, [String]>().apply(verbatim);
 			} else {
-				throw Exception("Can't instantiate type '``childType``' for ``declaration.name``");
+				throw Exception("No constructor([String]) found type '``childType``' in ``declaration.name``");
 			}
 		} else {
-			throw Exception("Can't parse type '``childType``' for ``declaration.name``");
-		} 
-	}
+			throw Exception("Can't instantiate value '``verbatim``' for type '``childType``' in ``declaration.name``");
+		}
+	} else {
+		throw Exception("Can't parse value '``verbatim``' for type '``childType``' in ``declaration.name``");
+	} 
 }
 
 T? parseCaseType<T>(String name) 
@@ -137,11 +160,10 @@ Boolean subTypeOf(ClassOrInterfaceDeclaration subType, ClassOrInterfaceDeclarati
 	return false;
 }
 
-
 "Parses arguments to construct given type."
 shared [T?, [String*]] parseArguments<T>([String*] arguments) 
-	given T satisfies Object {
-	
+	given T satisfies Object
+{
 	value type = `T`;
 	assert(is Class<T> type);
 	
@@ -160,38 +182,71 @@ shared [T?, [String*]] parseArguments<T>([String*] arguments)
 
 		// collects options and parameters from arguments
 		if (nonempty arguments) {
-			variable Boolean optionsMode = true;
-			for (argument in arguments) {
-				if (optionsMode && argument == "--") {
-					// options are ended
-					optionsMode = false;
-				} else if (optionsMode && argument.startsWith("-")) {
-					// decodes option
-					value islongOption = argument.startsWith("--");
-					value trimmedOption = argument.trim('-'.equals);
-					value equalsIndex = trimmedOption.firstOccurrence('=', 0, trimmedOption.size);
-					value [optionName, verbatimOption] = 
-						if (exists equalsIndex) 
-							then [trimmedOption.spanTo(equalsIndex-1), trimmedOption.spanFrom(equalsIndex+1)] 
-							else [trimmedOption, ""]; 
-					
-					value option = options.find((element) => 
-						if (islongOption) then optionName == element.item.longName else optionName == element.item.shortName
-					);
-					
-					if (exists option) {
-						verbatimOptionMap.put(option.key, verbatimOption);
+			variable [String*] tail = arguments;
+			while (true) {
+				// gets the argument
+				value argument = tail[0];
+				// removes argument from list
+				tail = tail.spanFrom(1);
+				
+				if (exists argument) {
+					// analyzes argument 
+					value optionStop = argument.equals("--");
+					if ( optionStop || !argument.startsWith("-") ) {
+						// parameters
+						if (!optionStop) { verbatimParameterList.add(argument); }
+						verbatimParameterList.addAll(tail);
+						tail = empty; 
 					} else {
-						errors.add("Option '``argument``' isn't supported.");
+						// decodes option
+						value longOption = argument.startsWith("--");
+						value trimmedOption = argument.trim('-'.equals);
+						value equalsIndex = trimmedOption.firstOccurrence('=', 0, trimmedOption.size);
+						value [optionName, verbatimOption] = 
+							if (exists equalsIndex) 
+								then [trimmedOption.spanTo(equalsIndex-1), trimmedOption.spanFrom(equalsIndex+1)] 
+								else [trimmedOption, ""]; 
+						
+						if (longOption) {
+							// searches for one long option
+							value option = options.find((element) => optionName == element.item.longName);
+							if (exists option) {
+								verbatimOptionMap.put(option.key, verbatimOption);
+							} else {
+								errors.add("Option '``argument``' isn't supported.");
+							}
+						
+						} else {
+							// searches for short options
+							value localOptionMap = ArrayList<ValueDeclaration>();
+							for (oneShortOption in optionName) {
+								value option = options.find((element) => oneShortOption == element.item.shortName);
+								if (exists option) {
+									localOptionMap.add(option.key);
+								} else {
+									errors.add("Option '``argument``' isn't supported.");
+								}
+							}
+						}
+						
+						value option = options.find((element) => 
+							if (longOption) then optionName == element.item.longName else optionName == element.item.shortName
+						);
+						
+						if (exists option) {
+							verbatimOptionMap.put(option.key, verbatimOption);
+						} else {
+							errors.add("Option '``argument``' isn't supported.");
+						}
 					}
 					
 				} else {
-					optionsMode = false;
-					verbatimParameterList.add(argument); 
+					// stops the loop
+					break;
 				}
 			}
-			
-			value verbatimParameterMap = HashMap<ValueDeclaration, String|{String+}>();
+
+			value verbatimParameterMap = HashMap<ValueDeclaration, String|[String+]>();
 			
 			// associates parameters to their corresponding field
 			for (parameter in parameters.declarations) {
@@ -202,12 +257,13 @@ shared [T?, [String*]] parseArguments<T>([String*] arguments)
 				
 				value parameterType = parameter.openType;
 				if (is OpenClassOrInterfaceType parameterType) {
-					if (subTypeOf(parameterType.declaration, `interface Sequential`)) {
+					 if (subTypeOf(parameterType.declaration, `interface Sequential`)) {
 						value sequence = verbatimParameterList.sequence();
 						// sequence can't be empty here, it's checked upstream
 						assert(nonempty sequence);
 						verbatimParameterMap.put(parameter, sequence);
 					} else {
+					
 						value delete = verbatimParameterList.delete(0);
 						assert(exists delete);
 						verbatimParameterMap.put(parameter, delete);
@@ -220,15 +276,6 @@ shared [T?, [String*]] parseArguments<T>([String*] arguments)
 			value namedArguments =  
 				{for (decl->verbatim in concatenate(verbatimOptionMap, verbatimParameterMap)) decl.name -> parseValue(decl, verbatim)}
 			;
-
-			for (name->t in namedArguments) {
-				if (exists t) {
-					print("- ``name`` -> ``t``");
-				} else {
-					print("- ``name`` -> null");
-				}
-			}
-			
 			result = type.namedApply(namedArguments);
 		} else {
 			result = null;
@@ -241,5 +288,4 @@ shared [T?, [String*]] parseArguments<T>([String*] arguments)
 	} else {
 		throw Exception("Class ``type`` doesn't have 'arguments' annotation");
 	}
-
 }
