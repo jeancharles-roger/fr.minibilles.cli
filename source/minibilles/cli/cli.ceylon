@@ -3,7 +3,8 @@ import ceylon.collection {
 	ArrayList
 }
 import ceylon.language.meta {
-	annotations
+	annotations,
+	type
 }
 import ceylon.language.meta.declaration {
 	ValueDeclaration,
@@ -17,9 +18,6 @@ import ceylon.language.meta.model {
 	Class,
 	Type
 }
-
-shared alias PrimiteValue => String|Integer|Float|Boolean;
-shared alias Value => PrimiteValue|[PrimiteValue*];
 
 "Annotation for an option."
 shared final annotation class OptionAnnotation(
@@ -87,10 +85,14 @@ Anything? parseValue(ValueDeclaration declaration, String|[String+] verbatim) {
 	} else {
 		switch (verbatim)
 		case (is String) {
-			return parseSingleValue(declaration, verbatim);
+			value childOpenType = declaration.openType;
+			assert(is OpenClassOrInterfaceType childOpenType);
+			return parseSingleValue(declaration.name, childOpenType.declaration, verbatim);
 		}
 		case (is [String+]) {
-			return parseMultipleValue(declaration, verbatim);
+			value sequential = parseMultipleValue(declaration, verbatim);
+			print("-- ``sequential`` type(`` type(sequential)``)--");
+			return sequential;
 		}
 	}
 }
@@ -99,46 +101,46 @@ Anything? parseValue(ValueDeclaration declaration, String|[String+] verbatim) {
 	// parses the verbatim
 	value childOpenType = declaration.openType;
 	assert(is OpenClassOrInterfaceType childOpenType);
-	value childType = childOpenType.declaration.apply<Anything>();
-	if (childType.subtypeOf(`Sequential<Anything>`)) {
-		return [for (single in verbatim) parseSingleValue(declaration, single)].coalesced.sequence();
+	if (subDeclarationOf(childOpenType.declaration, `interface Sequential`)) {
+		value typeArguments = childOpenType.typeArgumentList;
+		assert(nonempty typeArguments, is OpenClassOrInterfaceType childType = typeArguments[0]);
+		value result = sequence({for (single in verbatim) parseSingleValue(declaration.name, childType.declaration, single)}.coalesced);
+		return if (exists result) then result else empty;
 	} else {
-		throw Exception("Can't parse value '``verbatim``' for type '``childType``' in ``declaration.name``");
+		throw Exception("Can't parse value '``verbatim``' for type '``childOpenType``' in ``declaration.name``");
 	}
 }
 
 
 // TODO adds error handling for parsing integer, float and boolean
-Object? parseSingleValue(ValueDeclaration declaration, String verbatim) {
+Object? parseSingleValue(String name, ClassOrInterfaceDeclaration type, String verbatim) {
 	// parses the verbatim
-	value childOpenType = declaration.openType;
-	assert(is OpenClassOrInterfaceType childOpenType);
-	value childType = childOpenType.declaration.apply<Anything>();
-	if (childType == `String`) {
+	if (subDeclarationOf(type,`class String`)) {
 		return verbatim;
-	} else if (childType == `Integer`) {
+	} else if (subDeclarationOf(type,`class Integer`)) {
 		return parseInteger(verbatim);
-	} else if (childType == `Float`) {
+	} else if (subDeclarationOf(type,`class Float`)) {
 		return parseFloat(verbatim);
-	} else if (childType == `Boolean`) {
+	} else if (subDeclarationOf(type,`class Boolean`)) {
 		return if (verbatim.empty) then true else parseBoolean(verbatim);
-	} else if (is ClassOrInterface<Object> childType) {
+	} else if (is ClassOrInterface<Object> type) {
 		// searches for a case value
-		value caseValue = childType.caseValues.find((Object elem) => verbatim == elem.string);
+		value caseValue = type.caseValues.find((Object elem) => verbatim == elem.string);
 		if (exists caseValue) { return caseValue; } 
-		else if (is Class<Object> childType) {
+		/*else if (is Class<Object> type) {
 			// tries a constructor
-			value constructors = childType.getCallableConstructors<[String]>();
+			value constructors = type.getCallableConstructors<[String]>();
 			if (nonempty constructors) {
 				return constructors.first.declaration.apply<Object, [String]>().apply(verbatim);
 			} else {
-				throw Exception("No constructor([String]) found type '``childType``' in ``declaration.name``");
+				throw Exception("No constructor([String]) found type '``type``' in ``name``");
 			}
-		} else {
-			throw Exception("Can't instantiate value '``verbatim``' for type '``childType``' in ``declaration.name``");
+		}*/ 
+		else {
+			throw Exception("Can't instantiate value '``verbatim``' for type '``type``' in ``name``");
 		}
 	} else {
-		throw Exception("Can't parse value '``verbatim``' for type '``childType``' in ``declaration.name``");
+		throw Exception("Can't parse value '``verbatim``' for type '``type``' in ``name``");
 	} 
 }
 
@@ -150,12 +152,12 @@ T? parseCaseType<T>(String name)
 	return type.caseValues.find((T elem) => name == elem.string);
 }
 
-Boolean subTypeOf(ClassOrInterfaceDeclaration subType, ClassOrInterfaceDeclaration superType) {
+Boolean subDeclarationOf(ClassOrInterfaceDeclaration subType, ClassOrInterfaceDeclaration superType) {
 	if (subType == superType) { return true; }
 	value extendedType = subType.extendedType;
-	if (exists extendedType, subTypeOf(extendedType.declaration, superType)) { return true; }
+	if (exists extendedType, subDeclarationOf(extendedType.declaration, superType)) { return true; }
 	for (satisfied in subType.satisfiedTypes) {
-		if (subTypeOf(satisfied.declaration, superType)) {return true;}
+		if (subDeclarationOf(satisfied.declaration, superType)) {return true;}
 	}
 	return false;
 }
@@ -257,7 +259,7 @@ shared [T?, [String*]] parseArguments<T>([String*] arguments)
 				
 				value parameterType = parameter.openType;
 				if (is OpenClassOrInterfaceType parameterType) {
-					 if (subTypeOf(parameterType.declaration, `interface Sequential`)) {
+					 if (subDeclarationOf(parameterType.declaration, `interface Sequential`)) {
 						value sequence = verbatimParameterList.sequence();
 						// sequence can't be empty here, it's checked upstream
 						assert(nonempty sequence);
@@ -274,7 +276,7 @@ shared [T?, [String*]] parseArguments<T>([String*] arguments)
 			}
 			
 			value namedArguments =  
-				{for (decl->verbatim in concatenate(verbatimOptionMap, verbatimParameterMap)) decl.name -> parseValue(decl, verbatim)}
+				[for (decl->verbatim in concatenate(verbatimOptionMap, verbatimParameterMap)) decl.name -> parseValue(decl, verbatim)]
 			;
 			result = type.namedApply(namedArguments);
 		} else {

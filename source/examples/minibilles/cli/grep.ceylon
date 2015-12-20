@@ -1,11 +1,16 @@
 import minibilles.cli {
 	option,
 	parameters,
-	parseArguments
+	parseArguments,
+	creator
 }
 import ceylon.test {
 	test,
 	ignore
+}
+
+shared [Float,Float] parsePoint(String string) {
+	return [1.0, 1.0];
 }
 
 "Grep class that defines options and parameters like the unix grep command."
@@ -15,8 +20,7 @@ shared class Grep(
 	shared String pattern,
 	
 	"Files where to search"
-	//shared [String*] files = empty,
-	shared String files,
+	shared [String*] files = empty,
 	
 	"Print num lines of trailing context after each match.  See also the -B and -C options."
 	option("after-context", 'A')
@@ -48,18 +52,30 @@ shared class Grep(
      terns, and if no --include pattern is specified, all files are searched that are not excluded.  Patterns are matched to the full path specified, not
      only to the filename component."
 	option("exclude") 
-	shared [String*] patterns = empty
+	shared [String*] patterns = empty,
+	
+	option("toto") creator(`function parsePoint`)
+	shared [Float, Float] toto = [0.0, 0.0]
 ) { }
 
+shared void testArguments<T>([String+] arguments) given T satisfies Object {
+	value [result, errors] = parseArguments<T>(arguments);
+	if (exists result) {
+		print("Result => ``result``");
+	} else {
+		print("No result");
+	}
+	print("Errors: ``errors``");
+}
 
+shared test void testGrepSimplest() => testArguments<Grep>(["toto", "file1.txt"]);
+shared test void testGrepTwoFiles() => testArguments<Grep>(["toto", "file1.txt", "file2.txt"]);
 
-shared test void testGrep1() => parseArguments<Grep>(["toto", "file1.txt", "file2.txt"]);
+shared test void testGrepA3() => testArguments<Grep>(["-A", "3", "toto", "file1.txt", "file2.txt"]);
 
-shared test void testGrep2() => parseArguments<Grep>(["-A", "3", "toto", "file1.txt", "file2.txt"]);
+shared test void testGrepA3B5() => testArguments<Grep>(["-A", "3", "-B", "5", "toto", "file1.txt", "file2.txt"]);
 
-shared test void testGrep3() => parseArguments<Grep>(["-A", "3", "-B", "5", "toto", "file1.txt", "file2.txt"]);
-
-shared test void testGrep4() => parseArguments<Grep>(["-ac", "toto", "file1.txt", "file2.txt"]);
+shared test void testGrepAC() => testArguments<Grep>(["-ac", "toto", "file1.txt", "file2.txt"]);
 
 ignore("Not supported yet")
-shared test void testGrep5() => parseArguments<Grep>(["-AB", "5", "toto", "file1.txt", "file2.txt"]);
+shared test void testGrepAB5() => testArguments<Grep>(["-AB", "5", "toto", "file1.txt", "file2.txt"]);
