@@ -7,8 +7,8 @@ import minibilles.cli {
 	option,
 	parameters,
 	parseArguments,
-	printOptionsAndParameters,
-	printHelp
+	optionsAndParameters,
+	help
 }
 
 "Grep class that defines options and parameters like the unix grep command."
@@ -78,7 +78,7 @@ shared class Grep(
 	}
 	
 	shared actual String string {
-		return printOptionsAndParameters(this);
+		return optionsAndParameters(this);
 	}
 	
 }
@@ -153,6 +153,6 @@ shared test void testGrepAB() {
 
 
 shared void showGrepHelp() {
-	print(printHelp<Grep>("grep"));
+	print(help<Grep>("grep"));
 }
 	

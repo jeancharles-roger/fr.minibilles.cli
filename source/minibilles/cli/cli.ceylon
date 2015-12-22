@@ -14,8 +14,7 @@ import ceylon.language.meta.declaration {
 }
 import ceylon.language.meta.model {
 	ClassOrInterface,
-	Class,
-	Type
+	Class
 }
 
 "Annotation for an option."
@@ -140,14 +139,6 @@ Object? parseSingleValue(String name, ClassOrInterfaceDeclaration type, String v
 	} else {
 		throw Exception("Can't parse value '``verbatim``' for type '``type``' in ``name``");
 	} 
-}
-
-T? parseCaseType<T>(String name) 
-	given T satisfies Object 
-{
-	Type<T> type = `T`;
-	assert(is ClassOrInterface<T> type);
-	return type.caseValues.find((T elem) => name == elem.string);
 }
 
 Boolean subDeclarationOf(ClassOrInterfaceDeclaration subType, ClassOrInterfaceDeclaration superType) {

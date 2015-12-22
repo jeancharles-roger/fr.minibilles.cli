@@ -2,14 +2,13 @@ import ceylon.language.meta {
 	annotations
 }
 import ceylon.language.meta.declaration {
-	ValueDeclaration,
-	NestableDeclaration
+	ValueDeclaration
 }
 import ceylon.language.meta.model {
 	Class
 }
 
-shared String printOptionsAndParameters<T>(T source) given T satisfies Object {
+ shared String optionsAndParameters<T>(T source) given T satisfies Object {
 	value type = `T`;
 	assert(is Class<T> type);
 	
@@ -37,17 +36,11 @@ shared String printOptionsAndParameters<T>(T source) given T satisfies Object {
 	return concatenate(optionsPrint, parametersPrint).fold(type.declaration.name+":")((a,i) => a +"\n"+ i);
 }
 
-String getDescription(NestableDeclaration declaration) {
-	return 
-		if (exists doc = annotations(`DocAnnotation`, declaration)) then
-			doc.description
-		else
-			"";
-}
-
-shared String printHelp<T>(String programName) {
+shared String help<T>(String programName) {
 	value type = `T`;
 	assert(is Class<T> type);
+	
+	value general = if (exists doc = annotations(`DocAnnotation`, type.declaration)) then doc.description else "";
 	
 	value parameters = annotations(`ParametersAnnotation`, type.declaration);
 	value parametersPrint = if (exists parameters) then 
@@ -66,6 +59,7 @@ shared String printHelp<T>(String programName) {
 	};
 	
 	return "Usage: ``programName`` [options]``parametersPrint``
+	        ``general``
 	         where:
 	         ``optionsPrint.fold("")((a,i) => a +"\n"+ i)``
 	        ";
