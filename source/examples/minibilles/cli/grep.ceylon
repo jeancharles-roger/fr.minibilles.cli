@@ -122,9 +122,15 @@ shared test void testGrepAequals3() =>
 
 shared test void testGrepAfterContext3() => 
 	testArguments(
-		["--after-context=3", "toto", "file1.txt", "file2.txt"], 
+		["--after-context", "3", "toto", "file1.txt", "file2.txt"], 
 		Grep{afterContext = 3; pattern = "toto"; files = ["file1.txt", "file2.txt"];}
 	);
+
+shared test void testGrepAfterContextEquals3() => 
+		testArguments(
+	["--after-context=3", "toto", "file1.txt", "file2.txt"], 
+	Grep{afterContext = 3; pattern = "toto"; files = ["file1.txt", "file2.txt"];}
+);
 
 shared test void testGrepA3B5() => 
 	testArguments(
@@ -150,7 +156,6 @@ shared test void testGrepAB() {
 		Grep{pattern = "file1.txt"; files = ["file2.txt"];}
 	);
 }
-
 
 shared void showGrepHelp() {
 	print(help<Grep>("grep"));

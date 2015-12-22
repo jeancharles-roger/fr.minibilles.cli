@@ -1,6 +1,7 @@
 import ceylon.collection {
 	HashMap,
-	ArrayList
+	ArrayList,
+	MutableList
 }
 import ceylon.language.meta {
 	annotations
@@ -151,6 +152,57 @@ Boolean subDeclarationOf(ClassOrInterfaceDeclaration subType, ClassOrInterfaceDe
 	return false;
 }
 
+Map<ValueDeclaration,String|[String+]> verbatimParameters<T>
+	(Class<T> type, MutableList<String> verbatimParameterList, MutableList<String> errors)
+given T satisfies Object 
+{
+	value parameters = annotations(`ParametersAnnotation`, type.declaration);
+	value verbatimParameterMap = HashMap<ValueDeclaration, String|[String+]>();
+	if (exists parameters) {
+		// associates parameters to their corresponding field
+		for (parameter in parameters.declarations) {
+			if (verbatimParameterList.empty) {
+				errors.add("Missing parameters for ``parameter.name``");
+				break;
+			}
+			
+			value parameterType = parameter.openType;
+			if (is OpenClassOrInterfaceType parameterType) {
+				 if (subDeclarationOf(parameterType.declaration, `interface Sequential`)) {
+					value sequence = verbatimParameterList.sequence();
+					// sequence can't be empty here, it's checked upstream
+					assert(nonempty sequence);
+					verbatimParameterMap.put(parameter, sequence);
+				} else {
+					value delete = verbatimParameterList.delete(0);
+					assert(exists delete);
+					verbatimParameterMap.put(parameter, delete);
+				}
+			} else {
+				throw Exception("Unsupported type ``parameterType`` for parameter.");
+			}
+		}			
+	}
+	return verbatimParameterMap;
+}
+
+Boolean isBooleanValue(ValueDeclaration option) {
+	return if (is OpenClassOrInterfaceType openType = option.openType) then openType.declaration == `class Boolean` else false;
+}
+
+[String, [String*], String?] findVerbatimOption(ValueDeclaration option, String verbatimOption, [String*] argumentTail) {
+	variable String? error = null;
+	if (verbatimOption.size == 0 && !isBooleanValue(option)) { 
+		// fetchs the argument using next one in line
+		if (exists newArgument = argumentTail[0]) {
+			return [newArgument, argumentTail.spanFrom(1), null];
+		} else {
+			error = "Option -'``option.name``' needs an argument.";
+		}
+	}
+	return [verbatimOption, argumentTail, error];
+}
+
 "Parses arguments to construct given type."
 shared [T?, [String*]] parseArguments<T>([String*] arguments) 
 	given T satisfies Object
@@ -192,15 +244,26 @@ shared [T?, [String*]] parseArguments<T>([String*] arguments)
 					value trimmedOption = argument.trim('-'.equals);
 					value equalsIndex = trimmedOption.firstOccurrence('=', 0, trimmedOption.size);
 					value [optionName, verbatimOption] = 
-							if (exists equalsIndex) 
-					then [trimmedOption.spanTo(equalsIndex-1), trimmedOption.spanFrom(equalsIndex+1)] 
-					else [trimmedOption, ""]; 
+						if (exists equalsIndex) 
+							then [trimmedOption.spanTo(equalsIndex-1), trimmedOption.spanFrom(equalsIndex+1)] 
+							else [trimmedOption, ""]; 
+					
 					
 					if (longOption) {
 						// searches for one long option
 						value option = options.find((element) => optionName == element.item.longName);
 						if (exists option) {
-							verbatimOptionMap.put(option.key, verbatimOption);
+							if (verbatimOption.size == 0 && !isBooleanValue(option.key)) { 
+								// fetchs the argument using next one in line
+								if (exists newArgument = tail[0]) {
+									verbatimOptionMap.put(option.key, newArgument);
+									tail = tail.spanFrom(1);
+								} else {
+									errors.add("Option --'``optionName``' needs an argument.");
+								}
+							} else {
+								verbatimOptionMap.put(option.key, verbatimOption);
+							}
 						} else {
 							errors.add("Option --'``argument``' isn't supported.");
 						}
@@ -211,30 +274,23 @@ shared [T?, [String*]] parseArguments<T>([String*] arguments)
 						for (oneShortOption in optionName) {
 							value option = options.find((element) => oneShortOption == element.item.shortName);
 							if (exists option) {
-								if (is OpenClassOrInterfaceType openType = option.key.openType, openType.declaration == `class Boolean`) {
-									verbatimOptionMap.put(option.key, verbatimOption);
-								} else {
-									// needs an argument
-									if (neededArgument.size > 0) {
-										// argument is already fetched
-										verbatimOptionMap.put(option.key, neededArgument);
+								if (neededArgument.size == 0 && !isBooleanValue(option.key)) {
+									// fetchs the argument using next one in line
+									if (exists newArgument = tail[0]) {
+										neededArgument = newArgument;
+										verbatimOptionMap.put(option.key, newArgument);
+										tail = tail.spanFrom(1);
 									} else {
-										// fetchs the argument using next one in line
-										if (exists newArgument = tail[0]) {
-											neededArgument = newArgument;
-											verbatimOptionMap.put(option.key, newArgument);
-											tail = tail.spanFrom(1);
-										} else {
-											errors.add("Option -'``argument``' needs an argument.");
-										}
+										errors.add("Option -'``argument``' needs an argument.");
 									}
+								} else {
+									verbatimOptionMap.put(option.key, neededArgument);
 								}
 							} else {
 								errors.add("Option -'``argument``' isn't supported.");
 							}
 						}
 					}
-					
 				}
 			
 			} else {
@@ -244,33 +300,7 @@ shared [T?, [String*]] parseArguments<T>([String*] arguments)
 		}
 	
 		// reads parameters
-		value parameters = annotations(`ParametersAnnotation`, type.declaration);
-		value verbatimParameterMap = HashMap<ValueDeclaration, String|[String+]>();
-		if (exists parameters) {
-			// associates parameters to their corresponding field
-			for (parameter in parameters.declarations) {
-				if (verbatimParameterList.empty) {
-					errors.add("Missing parameters for ``parameter.name``");
-					break;
-				}
-				
-				value parameterType = parameter.openType;
-				if (is OpenClassOrInterfaceType parameterType) {
-					 if (subDeclarationOf(parameterType.declaration, `interface Sequential`)) {
-						value sequence = verbatimParameterList.sequence();
-						// sequence can't be empty here, it's checked upstream
-						assert(nonempty sequence);
-						verbatimParameterMap.put(parameter, sequence);
-					} else {
-						value delete = verbatimParameterList.delete(0);
-						assert(exists delete);
-						verbatimParameterMap.put(parameter, delete);
-					}
-				} else {
-					throw Exception("Unsupported type ``parameterType`` for parameter.");
-				}
-			}			
-		}
+		value verbatimParameterMap=verbatimParameters(type, verbatimParameterList, errors);
 		
 		value namedArguments = [
 			for (decl->verbatim in concatenate(verbatimOptionMap, verbatimParameterMap))
