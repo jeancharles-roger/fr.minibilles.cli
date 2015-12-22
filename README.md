@@ -1,75 +1,111 @@
-`minibilles.cli` allows to create command line interfaces (CLI) 
-using simple annotations.
+`minibilles.cli` allows to create command line interfaces (CLI) using simple annotations.
+
+# Getting Started
 
 Using `option` and `parameters` annotation you can simply create a CLI:
 
+Here is a simple example for a declaration:
+
 ```ceylon
-"Grep class that defines options and parameters like the unix grep command."
-parameters({`value pattern`, `value files`})
-shared class Grep(
-	"Pattern to search"
-	shared String pattern,
+"Simple example for command line"
+parameters({`value files`})
+shared class Test(
+	"Files to process"
+	shared [String*] files,
 	
-	"Files where to search"
-	shared [String*] files = empty,
+	"Shows this help"
+	option("help", 'h')
+	shared Boolean help,
 	
-	"Print num lines of trailing context after each match.  
-	 See also the -B and -C options."
-	option("after-context", 'A')
-	shared Integer afterContext = 0,
+	"Presents version"
+	option("version", 'v')
+	shared Boolean version,
+	
+	"Show some lines"
+	option("show", 's')
+	shared Integer showLine
+) { }
+```
 
-	"Print num lines of leading context before each match.  
-	 See also the -A and -C options."
-	option("before-context", 'B') 
-	shared Integer beforeContext = 0,
-	
-	"Treat all files as ASCII text.  Normally grep will simply print 
-	 ''Binary file ... matches'' if files contain binary characters.
-	 Use of this option forces grep to output lines matching the 
-	 specified pattern."
-	option("text", 'a') 
-	shared Boolean text = false,
-	
-	"The offset in bytes of a matched pattern is displayed in front 
-	 of the respective matched line."
-	option("byte-offset", 'b') 
-	shared Integer byteOffset = 0,
-	
-	"Print num lines of leading and trailing context surrounding each
-	 match.  The default is 2 and is equivalent to -A 2 -B 2.  
-	 Note: no whitespace may be given between the option and its 
-	 argument."
-	option("context", 'C') 
-	shared Integer context = 2,
-	
-	"Only a count of selected lines is written to standard output."
-	option("count", 'c') 
-	shared Boolean count = false,
-	
-	"If specified, it excludes files matching the given filename pattern
-	 from the search.  Note that --exclude patterns take priority over 
-	 --include patterns, and if no --include pattern is specified, all 
-	 files are searched that are not excluded.  Patterns are matched to 
-	 the full path specified, not only to the filename component."
-	option("exclude") 
-	shared [String*] excludePatterns = empty,
+This is how to use it:
 
-	"If specified, only files matching the given filename pattern are
-     searched.  Note that --exclude patterns take priority over
-     --include patterns.  Patterns are matched to the full path speci-
-     fied, not only to the filename component."
-	option("include") 
-	shared [String*] includePatterns = empty
-) {
-	
-	shared actual String string {
-		return printOptionsAndParameters(this);
-	}
-	
+```ceylon
+// prints help
+print(help<Test>("test"));
+
+// parses some arguments
+value [test, errors] = parseArguments<Test>(["-h", "--show", "10", "file1.txt", "file2.txt"]);
+
+// prints the result and the errors if any
+if (exists test) {
+	print(optionsAndParameters(test));
+}
+print(errors);
+```
+
+The result:
+
+```
+Usage: test [options] [files]
+  Simple example for command line
+  where:
+    
+  - --help | -h : Shows this help
+  - --show=value | -s value: Show some lines
+  - --version | -v : Presents version
+
+Test:
+-help: true
+-showLine: 10
+-version: false
+-files: [file1.txt, file2.txt]
+[]
+```
+
+# Supported types
+
+Here are the supported types:
+
+- `String`
+- `Boolean`
+- `Float`
+- `Integer`
+- Case objects will search for the object with the matching `string`, for instance:
+
+```ceylon
+interface Command of start|stop|restart {}
+object start satisfies Command { 
+	shared actual String string = "start";
+}
+object stop satisfies Command {
+	shared actual String string = "stop";
+}
+object restart satisfies Command {
+	shared actual String string = "restart";
 }
 ```
 
+For any other type, a `creator` annotation can be added to set a creator function. It reference a function taking a `String` as parameter and retreiving the value type or nothing. For instance:
 
-# Notes
+```ceylon
+option("source") creator(`function parsePath`)
+shared Path source = parsePath("/")
+```
 
+`Sequential` allows to defines multiple arguments: `[String+] files`. (see limitations for multiple arguments).
+
+# Known limitations
+
+- Multiple value can only be `[String*]` for now (will be fixed later on).
+- In the `parameters` list the first sequential value found will use all the remaining arguments.
 - Multiple parameters must be of type `Sequential`, `Iterable` isn't supported.
+- Inheritance declaration haven't been tested (to be done).
+- Case object won't be correctly printed for the help (to be done).
+
+# Examples
+
+Here are some examples:
+
+- [Test](https://github.com/jeancharles-roger/minibilles.cli/blob/master/source/examples/minibilles/cli/test.ceylon)
+- [Grep](https://github.com/jeancharles-roger/minibilles.cli/blob/master/source/examples/minibilles/cli/grep.ceylon)
+
