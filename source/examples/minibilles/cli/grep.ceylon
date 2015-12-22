@@ -1,6 +1,5 @@
 import ceylon.test {
 	test,
-	ignore,
 	assertEquals
 }
 
@@ -9,10 +8,6 @@ import minibilles.cli {
 	parameters,
 	parseArguments,
 	printOptionsAndParameters
-}
-
-shared [Float,Float] parsePoint(String string) {
-	return [1.0, 1.0];
 }
 
 "Grep class that defines options and parameters like the unix grep command."
@@ -73,6 +68,14 @@ shared class Grep(
 	shared [String*] includePatterns = empty
 ) {
 	
+	shared actual Boolean equals(Object other) {
+		if (is Grep other) {
+			return string.equals(other.string);
+		} else {
+			return false;
+		}
+	}
+	
 	shared actual String string {
 		return printOptionsAndParameters(this);
 	}
@@ -109,29 +112,42 @@ shared test void testGrepA3() =>
 		Grep{afterContext = 3; pattern = "toto"; files = ["file1.txt", "file2.txt"];}
 	);
 
+shared test void testGrepAequals3() => 
+	testArguments(
+		["-A=3", "toto", "file1.txt", "file2.txt"], 
+		Grep{afterContext = 3; pattern = "toto"; files = ["file1.txt", "file2.txt"];}
+	);
+
 
 shared test void testGrepAfterContext3() => 
 	testArguments(
-		["--after-context", "3", "toto", "file1.txt", "file2.txt"], 
+		["--after-context=3", "toto", "file1.txt", "file2.txt"], 
 		Grep{afterContext = 3; pattern = "toto"; files = ["file1.txt", "file2.txt"];}
 	);
 
 shared test void testGrepA3B5() => 
 	testArguments(
-		["-A", "3", "-B", "5", "toto", "file1.txt", "file2.txt"],
-		Grep{afterContext = 3; beforeContext = 5; pattern = "toto"; files = ["file1.txt", "file2.txt"];}
+		["-A", "1", "-B", "5", "toto", "file1.txt", "file2.txt"],
+		Grep{afterContext = 1; beforeContext = 5; pattern = "toto"; files = ["file1.txt", "file2.txt"];}
 	);
 
 shared test void testGrepAC() => 
 	testArguments(
 		["-ac", "toto", "file1.txt", "file2.txt"],
-		null
+		Grep{text = true; count = true; pattern = "toto"; files = ["file1.txt", "file2.txt"];}
 	);
 
-ignore("Not supported yet")
-shared test void testGrepAB5() => 
+shared test void testGrepAB8() => 
 	testArguments(
 		["-AB", "8", "toto", "file1.txt", "file2.txt"],
 		Grep{afterContext = 8; beforeContext = 8; pattern = "toto"; files = ["file1.txt", "file2.txt"];}
-
 	);
+
+shared test void testGrepAB() {
+	testArguments<Grep>(
+		["-AB", "toto", "file1.txt", "file2.txt"],
+		Grep{pattern = "file1.txt"; files = ["file2.txt"];}
+	);
+	
+}
+	
