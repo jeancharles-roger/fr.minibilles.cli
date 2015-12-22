@@ -26,7 +26,7 @@ shared final annotation class OptionAnnotation(
 satisfies OptionalAnnotation<OptionAnnotation, ValueDeclaration> {
 	shared actual String string => 
 			"--``longName``=value" +
-            (if (!shortName == '\0') then "|-``shortName`` value" else "");
+            (if (!shortName == '\0') then " | -``shortName`` value" else "");
 }
 
 "Defines value as an option of the format '-shortName argument' or '--longName=argument':
@@ -77,9 +77,10 @@ shared annotation CreatorAnnotation creator(FunctionDeclaration creator)
 // TODO adds error handling for parsing integer, float and boolean
 Anything? parseValue(ValueDeclaration declaration, String|[String+] verbatim) {
 	value annotation = annotations(`CreatorAnnotation`, declaration);
-	if (exists annotation) {
+	if (exists annotation, is String verbatim) {
 		// uses the creator
-		value creator = annotation.creator.apply<Object, [String|[String+]]>();
+		// TODO needs the support for [String+]
+		value creator = annotation.creator.apply<Object, [String]>();
 		return creator.apply(verbatim);
 	} else {
 		switch (verbatim)

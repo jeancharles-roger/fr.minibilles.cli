@@ -36,6 +36,12 @@ import ceylon.language.meta.model {
 	return concatenate(optionsPrint, parametersPrint).fold(type.declaration.name+":")((a,i) => a +"\n"+ i);
 }
 
+String optionPrettyString(ValueDeclaration declaration, OptionAnnotation option) {
+	return if (isBooleanValue(declaration)) then
+		"--``option.longName``" + (if (!option.shortName == '\0') then " | -``option.shortName`` " else "") else 
+		"--``option.longName``=value" + (if (!option.shortName == '\0') then " | -``option.shortName`` value" else "");
+}
+
 shared String help<T>(String programName) {
 	value type = `T`;
 	assert(is Class<T> type);
@@ -55,13 +61,14 @@ shared String help<T>(String programName) {
 	// TODO handle spaces before new line for lisibility
 	value optionsPrint = {
 		for (option in options) 
-			"  - ``option.key.string``" + (if (exists doc = annotations(`DocAnnotation`, option.item)) then doc.description else "")
+			"  - ``optionPrettyString(option.item, option.key)``: " + 
+			(if (exists doc = annotations(`DocAnnotation`, option.item)) then doc.description else "")
 	};
 	
 	return "Usage: ``programName`` [options]``parametersPrint``
-	        ``general``
-	         where:
-	         ``optionsPrint.fold("")((a,i) => a +"\n"+ i)``
+	          ``general``
+	          where:
+	            ``optionsPrint.fold("")((a,i) => a +"\n"+ i)``
 	        ";
 	
 }
