@@ -102,6 +102,10 @@ shared Path source = parsePath("/")
 - Inheritance declaration haven't been tested (to be done).
 - Case object won't be correctly printed for the help (to be done).
 
+# Things to come
+
+- Read the same options from a JSON configuration file.
+
 # Examples
 
 Here are some examples:
