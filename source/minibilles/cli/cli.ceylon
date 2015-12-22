@@ -287,8 +287,6 @@ shared [T?, [String*]] parseArguments<T>([String*] arguments)
 					decl.name -> parsed
 		];
 		
-		print("NamedArguments: ``namedArguments``");
-		
 		result = type.namedApply(namedArguments);
 		return [
 			result, 

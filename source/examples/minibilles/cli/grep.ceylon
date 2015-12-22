@@ -7,7 +7,8 @@ import minibilles.cli {
 	option,
 	parameters,
 	parseArguments,
-	printOptionsAndParameters
+	printOptionsAndParameters,
+	printHelp
 }
 
 "Grep class that defines options and parameters like the unix grep command."
@@ -148,6 +149,10 @@ shared test void testGrepAB() {
 		["-AB", "toto", "file1.txt", "file2.txt"],
 		Grep{pattern = "file1.txt"; files = ["file2.txt"];}
 	);
-	
+}
+
+
+shared void showGrepHelp() {
+	print(printHelp<Grep>("grep"));
 }
 	
