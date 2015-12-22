@@ -226,7 +226,7 @@ shared [T?, [String*]] parseArguments<T>([String*] arguments)
 									// needs an argument
 									if (neededArgument.size > 0) {
 										// argument is already fetched
-										verbatimOptionMap.put(option.key, verbatimOption);
+										verbatimOptionMap.put(option.key, neededArgument);
 									} else {
 										// fetchs the argument using next one in line
 										if (exists newArgument = tail[0]) {
