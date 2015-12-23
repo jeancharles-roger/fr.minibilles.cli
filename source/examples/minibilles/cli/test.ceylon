@@ -5,12 +5,16 @@ import minibilles.cli {
 	optionsAndParameters,
 	parseArguments
 }
+import ceylon.test {
+	assertEquals,
+	test
+}
 
 "Simple example for command line"
 parameters({`value files`})
 shared class Test(
 	"Files to process"
-	shared [String*] files,
+	shared [String*] files = empty,
 	
 	"Shows this help"
 	option("help", 'h')
@@ -23,7 +27,16 @@ shared class Test(
 	"Show some lines"
 	option("show", 's')
 	shared Integer showLine = 1
-) { }
+) { 
+	shared actual Boolean equals(Object other) {
+		// TODO really bad
+		return string.equals(other.string);
+	}
+	
+	shared actual String string {
+		return optionsAndParameters(this);
+	}
+}
 
 shared void runTest() {
 	// prints help
@@ -33,8 +46,18 @@ shared void runTest() {
 	value [test, errors] = parseArguments<Test>(["-h", "--show", "10", "file1.txt", "file2.txt"]);
 	
 	// prints the result and the errors if any
-	if (exists test) {
-		print(optionsAndParameters(test));
-	}
+	print(optionsAndParameters(test));
 	print(errors);
 }
+
+shared void testArguments<T>([String*] arguments, T? expected) given T satisfies Object {
+	print("--- Test for ``arguments`` ---");
+	value [result, errors] = parseArguments<T>(arguments);
+	print(result);
+	print("Errors: ``errors``");
+	assertEquals(result, expected);
+}
+
+shared test void testNoArguments() => testArguments(empty, Test());
+
+

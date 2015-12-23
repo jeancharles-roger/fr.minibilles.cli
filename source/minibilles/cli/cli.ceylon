@@ -205,7 +205,7 @@ Boolean isBooleanValue(ValueDeclaration option) {
 }
 
 "Parses arguments to construct given type."
-shared [T?, [String*]] parseArguments<T>([String*] arguments) 
+shared [T, [String*]] parseArguments<T>([String*] arguments) 
 	given T satisfies Object
 {
 	value type = `T`;
@@ -219,7 +219,6 @@ shared [T?, [String*]] parseArguments<T>([String*] arguments)
 	
 	value verbatimOptionMap = HashMap<ValueDeclaration, String>();
 	value verbatimParameterList = ArrayList<String>();
-	T? result;
 	value errors = ArrayList<String>();
 	
 	// collects options and parameters from arguments
@@ -299,22 +298,16 @@ shared [T?, [String*]] parseArguments<T>([String*] arguments)
 				break;
 			}
 		}
-	
-		// reads parameters
-		value verbatimParameterMap=verbatimParameters(type, verbatimParameterList, errors);
-		
-		value namedArguments = [
-			for (decl->verbatim in concatenate(verbatimOptionMap, verbatimParameterMap))
-				if (exists parsed = parseValue(decl, verbatim))
-					decl.name -> parsed
-		];
-		
-		result = type.namedApply(namedArguments);
-		return [
-			result, 
-			errors.sequence()
-		];	
-	} else {
-		return [null, ["No argument given."]];
 	}
+	// reads parameters
+	value verbatimParameterMap=verbatimParameters(type, verbatimParameterList, errors);
+	value namedArguments = [
+		for (decl->verbatim in concatenate(verbatimOptionMap, verbatimParameterMap))
+			if (exists parsed = parseValue(decl, verbatim))
+				decl.name -> parsed
+	];
+	return [
+		type.namedApply(namedArguments), 
+		errors.sequence()
+	];	
 }

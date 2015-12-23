@@ -1,12 +1,10 @@
 import ceylon.test {
-	test,
-	assertEquals
+	test
 }
 
 import minibilles.cli {
 	option,
 	parameters,
-	parseArguments,
 	optionsAndParameters,
 	help
 }
@@ -70,29 +68,14 @@ shared class Grep(
 ) {
 	
 	shared actual Boolean equals(Object other) {
-		if (is Grep other) {
-			return string.equals(other.string);
-		} else {
-			return false;
-		}
+		// TODO really bad
+		return string.equals(other.string);
 	}
 	
 	shared actual String string {
 		return optionsAndParameters(this);
 	}
 	
-}
-
-shared void testArguments<T>([String+] arguments, T? expected) given T satisfies Object {
-	print("--- Test for ``arguments`` ---");
-	value [result, errors] = parseArguments<T>(arguments);
-	if (exists result) {
-		print(result);
-	} else {
-		print("No result");
-	}
-	print("Errors: ``errors``");
-	assertEquals(result, expected);
 }
 
 shared test void testGrepSimplest() => 
