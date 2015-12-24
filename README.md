@@ -112,4 +112,5 @@ Here are some examples:
 
 - [Test](https://github.com/jeancharles-roger/minibilles.cli/blob/master/source/examples/minibilles/cli/test.ceylon)
 - [Grep](https://github.com/jeancharles-roger/minibilles.cli/blob/master/source/examples/minibilles/cli/grep.ceylon)
+- [Server](https://github.com/jeancharles-roger/minibilles.cli/blob/master/source/examples/minibilles/cli/server.ceylon)
 
