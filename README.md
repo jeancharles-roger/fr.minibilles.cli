@@ -1,6 +1,8 @@
-`minibilles.cli` allows to create command line interfaces (CLI) using simple annotations.
+`fr.minibilles.cli` allows to create command line interfaces (CLI) using simple annotations.
 
 # Getting Started
+
+First import the module: `import fr.minibilles.cli;`.
 
 Using `option` and `parameters` annotation you can simply create a CLI:
 
@@ -110,7 +112,7 @@ shared Path source = parsePath("/")
 
 Here are some examples:
 
-- [Test](https://github.com/jeancharles-roger/minibilles.cli/blob/master/source/examples/minibilles/cli/test.ceylon)
-- [Grep](https://github.com/jeancharles-roger/minibilles.cli/blob/master/source/examples/minibilles/cli/grep.ceylon)
-- [Server](https://github.com/jeancharles-roger/minibilles.cli/blob/master/source/examples/minibilles/cli/server.ceylon)
+- [Test](https://github.com/jeancharles-roger/fr.minibilles.cli/blob/master/source/examples/minibilles/cli/test.ceylon)
+- [Grep](https://github.com/jeancharles-roger/fr.minibilles.cli/blob/master/source/examples/minibilles/cli/grep.ceylon)
+- [Server](https://github.com/jeancharles-roger/fr.minibilles.cli/blob/master/source/examples/minibilles/cli/server.ceylon)
 
