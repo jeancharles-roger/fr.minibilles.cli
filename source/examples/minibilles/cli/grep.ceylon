@@ -2,7 +2,7 @@ import ceylon.test {
 	test
 }
 
-import minibilles.cli {
+import fr.minibilles.cli {
 	option,
 	parameters,
 	optionsAndParameters,

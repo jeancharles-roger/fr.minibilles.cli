@@ -97,6 +97,6 @@
     
    """
 // TODO add check options 
-module minibilles.cli "0.1.0" {
+module fr.minibilles.cli "0.1.0" {
 	import ceylon.collection "1.2.0";	
 }

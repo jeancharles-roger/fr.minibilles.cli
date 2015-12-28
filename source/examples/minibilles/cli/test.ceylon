@@ -1,4 +1,4 @@
-import minibilles.cli {
+import fr.minibilles.cli {
 	option,
 	parameters,
 	help,
