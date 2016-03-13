@@ -112,7 +112,8 @@ shared Path source = parsePath("/")
 
 Here are some examples:
 
-- [Test](https://github.com/jeancharles-roger/fr.minibilles.cli/blob/master/source/examples/minibilles/cli/test.ceylon)
-- [Grep](https://github.com/jeancharles-roger/fr.minibilles.cli/blob/master/source/examples/minibilles/cli/grep.ceylon)
-- [Server](https://github.com/jeancharles-roger/fr.minibilles.cli/blob/master/source/examples/minibilles/cli/server.ceylon)
+- [Test](https://github.com/jeancharles-roger/fr.minibilles.cli/blob/master/source/examples/fr/minibilles/cli/test.ceylon)
+- [Grep](https://github.com/jeancharles-roger/fr.minibilles.cli/blob/master/source/examples/fr/minibilles/cli/grep.ceylon)
+- [Server](https://github.com/jeancharles-roger/fr.minibilles.cli/blob/master/source/examples/fr/minibilles/cli/server.ceylon)
 
+fr
