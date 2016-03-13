@@ -1,5 +1,7 @@
 `fr.minibilles.cli` allows to create command line interfaces (CLI) using simple annotations.
 
+[![Build Status](https://drone.io/github.com/jeancharles-roger/fr.minibilles.cli/status.png)](https://drone.io/github.com/jeancharles-roger/fr.minibilles.cli/latest)
+
 # Getting Started
 
 First import the module: `import fr.minibilles.cli;`.
