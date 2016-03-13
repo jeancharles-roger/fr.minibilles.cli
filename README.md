@@ -118,4 +118,3 @@ Here are some examples:
 - [Grep](https://github.com/jeancharles-roger/fr.minibilles.cli/blob/master/source/examples/fr/minibilles/cli/grep.ceylon)
 - [Server](https://github.com/jeancharles-roger/fr.minibilles.cli/blob/master/source/examples/fr/minibilles/cli/server.ceylon)
 
-fr
