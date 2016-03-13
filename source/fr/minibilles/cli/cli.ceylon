@@ -11,10 +11,11 @@ import ceylon.language.meta.declaration {
 	ClassDeclaration,
 	OpenClassOrInterfaceType,
 	ClassOrInterfaceDeclaration,
-	FunctionDeclaration
+	FunctionDeclaration,
+	OpenType,
+	OpenClassType
 }
 import ceylon.language.meta.model {
-	ClassOrInterface,
 	Class
 }
 
@@ -126,24 +127,20 @@ Object? parseSingleValue(String name, ClassOrInterfaceDeclaration type, String v
 		return parseFloat(verbatim);
 	} else if (subDeclarationOf(type,`class Boolean`)) {
 		return if (verbatim.empty) then true else parseBoolean(verbatim);
-	} else if (is ClassOrInterface<Object> type) {
+	} else {
 		// searches for a case value
-		value caseValue = type.caseValues.find((Object elem) => verbatim == elem.string);
-		if (exists caseValue) { return caseValue; } 
-		/*else if (is Class<Object> type) {
-			// tries a constructor
-			value constructors = type.getCallableConstructors<[String]>();
-			if (nonempty constructors) {
-				return constructors.first.declaration.apply<Object, [String]>().apply(verbatim);
-			} else {
-				throw Exception("No constructor([String]) found type '``type``' in ``name``");
-			}
-		}*/ 
+		// TODO find a class in depth with the given name
+		value caseType = type.caseTypes.find((OpenType elem) {
+			if (is OpenClassType elem) {
+				return verbatim.lowercased == elem.declaration.name.lowercased;				
+			} 
+			return false;
+		});
+		
+		if (exists caseType) { return caseType; } 
 		else {
 			throw Exception("Can't instantiate value '``verbatim``' for type '``type``' in ``name``");
 		}
-	} else {
-		throw Exception("Can't parse value '``verbatim``' for type '``type``' in ``name``");
 	} 
 }
 
@@ -194,20 +191,6 @@ given T satisfies Object
 Boolean isBooleanValue(ValueDeclaration option) {
 	return if (is OpenClassOrInterfaceType openType = option.openType) then openType.declaration == `class Boolean` else false;
 }
-
-[String, [String*], String?] findVerbatimOption(ValueDeclaration option, String verbatimOption, [String*] argumentTail) {
-	variable String? error = null;
-	if (verbatimOption.size == 0 && !isBooleanValue(option)) { 
-		// fetchs the argument using next one in line
-		if (exists newArgument = argumentTail[0]) {
-			return [newArgument, argumentTail.spanFrom(1), null];
-		} else {
-			error = "Option -'``option.name``' needs an argument.";
-		}
-	}
-	return [verbatimOption, argumentTail, error];
-}
-
 
 "Parses arguments to construct given type."
 shared [T, [String*]] parseArguments<T>(
