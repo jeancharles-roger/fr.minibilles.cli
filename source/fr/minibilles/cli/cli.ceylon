@@ -77,19 +77,23 @@ shared annotation CreatorAnnotation creator(FunctionDeclaration creator)
 // TODO adds error handling for parsing integer, float and boolean
 Anything? parseValue(ValueDeclaration declaration, String|[String+] verbatim) {
 	value annotation = annotations(`CreatorAnnotation`, declaration);
-	if (exists annotation, is String verbatim) {
-		// uses the creator
-		// TODO needs the support for [String+]
-		value creator = annotation.creator.apply<Object, [String]>();
-		return creator.apply(verbatim);
-	} else {
-		switch (verbatim)
-		case (is String) {
-			value childOpenType = declaration.openType;
+	switch (verbatim)
+	case (is String) {
+		value childOpenType = declaration.openType;
+		if (exists annotation) {
+			// uses the creator
+			value creator = annotation.creator.apply<Object, [String]>();
+			return creator.apply(verbatim);			
+		} else {
 			assert(is OpenClassOrInterfaceType childOpenType);
 			return parseSingleValue(declaration.name, childOpenType.declaration, verbatim);
-		}
-		case (is [String+]) {
+		}			
+	}
+	case (is [String+]) {
+		if (exists annotation) {
+			value creator = annotation.creator.apply<Object, [[String+]]>();
+			return creator.apply(*verbatim);
+		} else {
 			return parseMultipleValue(declaration, verbatim);
 		}
 	}
@@ -204,8 +208,11 @@ Boolean isBooleanValue(ValueDeclaration option) {
 	return [verbatimOption, argumentTail, error];
 }
 
+
 "Parses arguments to construct given type."
-shared [T, [String*]] parseArguments<T>([String*] arguments) 
+shared [T, [String*]] parseArguments<T>(
+	[String*] arguments
+) 
 	given T satisfies Object
 {
 	value type = `T`;

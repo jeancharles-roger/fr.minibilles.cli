@@ -38,9 +38,7 @@
    value [test, errors] = parseArguments<Test>(["-h", "--show", "10", "file1.txt", "file2.txt"]);
    
    // prints the result and the errors if any
-   if (exists test) {
    print(optionsAndParameters(test));
-   }
    print(errors);
    ```
    
@@ -97,6 +95,6 @@
     
    """
 // TODO add check options 
-module fr.minibilles.cli "0.1.0" {
-	import ceylon.collection "1.2.0";	
+module fr.minibilles.cli "0.1.1" {
+	import ceylon.collection "1.2.1";	
 }
