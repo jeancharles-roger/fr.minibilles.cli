@@ -3,3 +3,6 @@
 /classes/
 /modules/
 *.iml
+.classpath
+.project
+
