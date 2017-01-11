@@ -50,3 +50,5 @@ shared test void testServerRepo1() =>
 	["--repos", "repo1"], 
 	Server{repos = ["repo1"];}
 );
+
+shared test void testServerHelp() => testHelp<Server>();

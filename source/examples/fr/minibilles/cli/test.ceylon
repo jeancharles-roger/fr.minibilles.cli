@@ -7,7 +7,9 @@ import fr.minibilles.cli {
 }
 import ceylon.test {
 	assertEquals,
-	test
+	test,
+    assertNotNull,
+    assertTrue
 }
 
 "Simple example for command line"
@@ -51,13 +53,20 @@ shared void runTest() {
 }
 
 shared void testArguments<T>([String*] arguments, T? expected) given T satisfies Object {
-	print("--- Test for ``arguments`` ---");
+	print("--- ``T.string`` for ``arguments`` ---");
 	value [result, errors] = parseArguments<T>(arguments);
 	print(result);
 	print("Errors: ``errors``");
 	assertEquals(result, expected);
 }
 
+shared void testHelp<T>() given T satisfies Object {
+	print("--- ``T.string`` for help ---");
+	value helpString = help<T>("testProgram");
+	assertTrue(helpString.size > 0);
+	print(helpString);
+}
+
 shared test void testNoArguments() => testArguments(empty, Test());
 
-
+shared test void testShowHelp() => testHelp<Test>();

@@ -140,7 +140,4 @@ shared test void testGrepAB() {
 	);
 }
 
-shared void showGrepHelp() {
-	print(help<Grep>("grep"));
-}
-	
+shared test void testGrepHelp() => testHelp<Grep>();
