@@ -14,7 +14,7 @@ import ceylon.test {
 }
 
 "Starts Web server"
-class Server(
+class Server1(
 	"Path to static assets"
 	option("assets", 'a')
 	shared String assetsPath = "resource",
@@ -33,22 +33,22 @@ class Server(
 	}
 }
 
-shared test void testServerNoArgument() => 
+shared test void testServer1NoArgument() =>
 	testArguments(
 		[], 
-		Server{}
+		Server1 {}
 	);
 
-shared test void testServerAssets() => 
+shared test void testServer1Assets() =>
 	testArguments(
 		["--assets", "assets"], 
-		Server{assetsPath = "assets";}
+		Server1 {assetsPath = "assets";}
 	);
 
-shared test void testServerRepo1() => 
+shared test void testServer1Repo1() =>
 		testArguments(
 	["--repos", "repo1"], 
-	Server{repos = ["repo1"];}
+	Server1 {repos = ["repo1"];}
 );
 
-shared test void testServerHelp() => testHelp<Server>();
+shared test void testServer1Help() => testHelp<Server1>();
