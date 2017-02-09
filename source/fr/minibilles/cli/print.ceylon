@@ -42,7 +42,7 @@ String optionPrettyString(ValueDeclaration declaration, OptionAnnotation option)
 		"--``option.longName``=value" + (if (!option.shortName == '\0') then " | -``option.shortName`` value" else "");
 }
 
-shared String help<T>(String programName) {
+shared String help<T>(String programName) given T satisfies Object {
 	value type = `T`;
 	assert(is Class<T> type);
 	

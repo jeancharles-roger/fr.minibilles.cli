@@ -5,8 +5,7 @@ import ceylon.test {
 import fr.minibilles.cli {
 	option,
 	parameters,
-	optionsAndParameters,
-	help
+	optionsAndParameters
 }
 
 "Grep class that defines options and parameters like the unix grep command."
@@ -135,8 +134,8 @@ shared test void testGrepAB8() =>
 
 shared test void testGrepAB() {
 	testArguments<Grep>(
-		["-AB", "toto", "file1.txt", "file2.txt"],
-		Grep{pattern = "file1.txt"; files = ["file2.txt"];}
+		["-AB", "5", "file1.txt", "file2.txt"],
+		Grep{afterContext = 5; beforeContext = 5; pattern = "file1.txt"; files = ["file2.txt"];}
 	);
 }
 

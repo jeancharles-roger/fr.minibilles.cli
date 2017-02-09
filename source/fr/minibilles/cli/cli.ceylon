@@ -64,11 +64,11 @@ Object? parseSingleValue(String name, ClassOrInterfaceDeclaration type, String v
 	if (subDeclarationOf(type,`class String`)) {
 		return verbatim;
 	} else if (subDeclarationOf(type,`class Integer`)) {
-		return parseInteger(verbatim);
+		return Integer.parse(verbatim);
 	} else if (subDeclarationOf(type,`class Float`)) {
-		return parseFloat(verbatim);
+		return Integer.parse(verbatim);
 	} else if (subDeclarationOf(type,`class Boolean`)) {
-		return if (verbatim.empty) then true else parseBoolean(verbatim);
+		return if (verbatim.empty) then true else Boolean.parse(verbatim);
 	} else {
 		// searches for a case value
 		// TODO find a class in depth with the given name

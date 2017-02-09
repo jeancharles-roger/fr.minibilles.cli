@@ -8,8 +8,10 @@ import fr.minibilles.cli {
 import ceylon.test {
 	assertEquals,
 	test,
-    assertNotNull,
     assertTrue
+}
+import ceylon.language.meta.model {
+    Class
 }
 
 "Simple example for command line"
@@ -52,8 +54,13 @@ shared void runTest() {
 	print(errors);
 }
 
+shared String typeName<T>() given T satisfies Object {
+	assert(is Class<T> type = `T`);
+	return type.declaration.name;
+}
+
 shared void testArguments<T>([String*] arguments, T? expected) given T satisfies Object {
-	print("--- ``T.string`` for ``arguments`` ---");
+	print("--- ``typeName<T>()`` for ``arguments`` ---");
 	value [result, errors] = parseArguments<T>(arguments);
 	print(result);
 	print("Errors: ``errors``");
@@ -61,7 +68,7 @@ shared void testArguments<T>([String*] arguments, T? expected) given T satisfies
 }
 
 shared void testHelp<T>() given T satisfies Object {
-	print("--- ``T.string`` for help ---");
+	print("--- ``typeName<T>()`` for help ---");
 	value helpString = help<T>("testProgram");
 	assertTrue(helpString.size > 0);
 	print(helpString);
