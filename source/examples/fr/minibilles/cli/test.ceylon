@@ -69,4 +69,6 @@ shared void testHelp<T>() given T satisfies Object {
 
 shared test void testNoArguments() => testArguments(empty, Test());
 
+shared test void testVersionHelp() => testArguments(["-v", "-h"], Test{help=true; version=true;});
+
 shared test void testShowHelp() => testHelp<Test>();
