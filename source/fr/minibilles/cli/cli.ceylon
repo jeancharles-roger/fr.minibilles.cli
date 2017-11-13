@@ -1,20 +1,20 @@
 import ceylon.collection {
-	HashMap,
-	ArrayList,
-	MutableList
+    HashMap,
+    ArrayList,
+    MutableList
 }
 import ceylon.language.meta {
-	annotations
+    annotations
 }
 import ceylon.language.meta.declaration {
-	ValueDeclaration,
-	OpenClassOrInterfaceType,
-	ClassOrInterfaceDeclaration,
-	OpenType,
-	OpenClassType
+    ValueDeclaration,
+    OpenClassOrInterfaceType,
+    ClassOrInterfaceDeclaration,
+    OpenType,
+    OpenClassType
 }
 import ceylon.language.meta.model {
-	Class
+    Class
 }
 
 // TODO adds error handling for parsing integer, float and boolean
@@ -50,8 +50,7 @@ Anything? parseValue(ValueDeclaration declaration, String|[String+] verbatim) {
 		value typeArguments = childOpenType.typeArgumentList;
 		assert(nonempty typeArguments, is OpenClassOrInterfaceType childType = typeArguments[0]);
 		// XXX handle other types than String
-		value result = sequence({for (single in verbatim) /*parseSingleValue(declaration.name, childType.declaration, single)*/ single}.coalesced);
-		return if (exists result) then result else empty;
+		return [for (single in verbatim) /*parseSingleValue(declaration.name, childType.declaration, single)*/ single.coalesced];
 	} else {
 		throw Exception("Can't parse value '``verbatim``' for type '``childOpenType``' in ``declaration.name``");
 	}

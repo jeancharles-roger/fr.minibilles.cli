@@ -1,15 +1,15 @@
-import fr.minibilles.cli {
-	option,
-	optionsAndParameters,
-	creator
-}
 import ceylon.test {
-	test
+    test
+}
+
+import fr.minibilles.cli {
+    option,
+    optionsAndParameters,
+    creator
 }
 
 [String+] parseRepos(String verbatim) {
 	value result = verbatim.split(','.equals).sequence();
-	assert(nonempty result);
 	return result;
 }
 
