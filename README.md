@@ -1,6 +1,6 @@
 `fr.minibilles.cli` allows to create command line interfaces (CLI) using simple annotations.
 
-[![Build Status](https://drone.io/github.com/jeancharles-roger/fr.minibilles.cli/status.png)](https://drone.io/github.com/jeancharles-roger/fr.minibilles.cli/latest)
+[![Build Status](https://travis-ci.org/jeancharles-roger/fr.minibilles.cli.svg?branch=master)](https://travis-ci.org/jeancharles-roger/fr.minibilles.cli)
 
 # Getting Started
 
