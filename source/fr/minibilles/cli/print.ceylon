@@ -1,11 +1,11 @@
 import ceylon.language.meta {
-	annotations
+    annotations
 }
 import ceylon.language.meta.declaration {
-	ValueDeclaration
+    ValueDeclaration
 }
 import ceylon.language.meta.model {
-	Class
+    Class
 }
 
  shared String optionsAndParameters<T>(T source) given T satisfies Object {
@@ -36,9 +36,11 @@ import ceylon.language.meta.model {
 	return concatenate(optionsPrint, parametersPrint).fold(type.declaration.name+":")((a,i) => a +"\n"+ i);
 }
 
+String prettyPrintShortName(Character shortName) => if (!shortName == '\0') then " | -``shortName`` " else "";
+        
 String optionPrettyString(ValueDeclaration declaration, OptionAnnotation option) {
 	return if (isBooleanValue(declaration)) then
-		"--``option.longName``" + (if (!option.shortName == '\0') then " | -``option.shortName`` " else "") else 
+		"--``option.longName``" + prettyPrintShortName(option.shortName) else 
 		"--``option.longName``=value" + (if (!option.shortName == '\0') then " | -``option.shortName`` value" else "");
 }
 
@@ -47,6 +49,8 @@ shared String help<T>(String programName) given T satisfies Object {
 	assert(is Class<T> type);
 	
 	value general = if (exists doc = annotations(`DocAnnotation`, type.declaration)) then doc.description else "";
+	
+	value additionalDoc = if (exists doc = annotations(`AdditionalDocAnnotation`, type.declaration)) then "\n``doc.docProvider.get()?.string else ""``" else "";
 	
 	value parameters = annotations(`ParametersAnnotation`, type.declaration);
 	value parametersPrint = if (exists parameters) then 
@@ -65,10 +69,14 @@ shared String help<T>(String programName) given T satisfies Object {
 			(if (exists doc = annotations(`DocAnnotation`, option.item)) then doc.description else "")
 	};
 	
+	value infosPrint = [
+    	for (info in type.declaration.annotations<InfoAnnotation>()) 
+	        "  - --`` info.longName + prettyPrintShortName(info.shortName) ``: `` info.description``"
+	];
+	
 	return "Usage: ``programName`` [options]``parametersPrint``
-	          ``general``
-	          where:
-	            ``optionsPrint.fold("")((a,i) => a +"\n"+ i)``
-	        ";
+	          ``general + additionalDoc``
+	        where:
+	        ``"\n".join(concatenate(optionsPrint, infosPrint).map((l)=>"  " + l))``";
 	
 }

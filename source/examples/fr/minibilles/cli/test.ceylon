@@ -3,7 +3,9 @@ import fr.minibilles.cli {
 	parameters,
 	help,
 	optionsAndParameters,
-	parseArguments
+	parseArguments,
+    Info,
+    info
 }
 import ceylon.test {
 	assertEquals,
@@ -16,17 +18,11 @@ import ceylon.language.meta.model {
 
 "Simple example for command line"
 parameters({`value files`})
+info("Shows this help", "help", 'h')
+info("Presents version", "version", 'v')
 shared class Test(
 	"Files to process"
 	shared [String*] files = empty,
-	
-	"Shows this help"
-	option("help", 'h')
-	shared Boolean help = false,
-	
-	"Presents version"
-	option("version", 'v')
-	shared Boolean version = false,
 	
 	"Show some lines"
 	option("show", 's')
@@ -47,11 +43,20 @@ shared void runTest() {
 	print(help<Test>("test"));
 	
 	// parses some arguments
-	value [test, errors] = parseArguments<Test>(["-h", "--show", "10", "file1.txt", "file2.txt"]);
+	value result = parseArguments<Test>(["--show", "10", "file1.txt", "file2.txt"]);
 	
 	// prints the result and the errors if any
-	print(optionsAndParameters(test));
-	print(errors);
+	switch(result)
+	case(is Test) {
+		print(optionsAndParameters(result));
+	}
+	case(is Info) {
+		print("Info: ``result.longName``");
+	}
+	else {
+		print("Errors: `` result ``");
+	}
+	 
 }
 
 shared String typeName<T>() given T satisfies Object {
@@ -59,11 +64,19 @@ shared String typeName<T>() given T satisfies Object {
 	return type.declaration.name;
 }
 
-shared void testArguments<T>([String*] arguments, T? expected) given T satisfies Object {
+shared void testArguments<T>([String*] arguments, T|Info|[String+] expected) given T satisfies Object {
 	print("--- ``typeName<T>()`` for ``arguments`` ---");
-	value [result, errors] = parseArguments<T>(arguments);
-	print(result);
-	print("Errors: ``errors``");
+	value result = parseArguments<T>(arguments);
+	switch(result)
+	case(is Test) {
+		print(optionsAndParameters(result));
+	}
+	case(is Info) {
+		print("Info: ``result.longName``");
+	}
+	else {
+		print("Errors: ``result``");
+	}
 	assertEquals(result, expected);
 }
 
@@ -74,8 +87,10 @@ shared void testHelp<T>() given T satisfies Object {
 	print(helpString);
 }
 
-shared test void testNoArguments() => testArguments(empty, Test());
+shared test void testNoArguments() => testArguments<Test>(empty, Test());
 
-shared test void testVersionHelp() => testArguments(["-v", "-h"], Test{help=true; version=true;});
+shared test void testVersionInfo() => testArguments<Test>(["--version"], Info("version"));
+
+shared test void testHelpInfo() => testArguments<Test>(["--help"], Info("help"));
 
 shared test void testShowHelp() => testHelp<Test>();
