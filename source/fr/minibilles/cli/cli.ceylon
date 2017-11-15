@@ -10,36 +10,45 @@ import ceylon.language.meta.declaration {
     ValueDeclaration,
     OpenClassOrInterfaceType,
     ClassOrInterfaceDeclaration,
-    OpenType,
     OpenClassType
 }
 import ceylon.language.meta.model {
     Class
 }
 
+shared final class Info(shared String longName) {
+    equals(Object that) => if (is Info that) then longName.equals(that.longName) else false;
+    shared actual Integer hash => longName.hash;
+    string => "Info: ``longName``";
+}
+
 // TODO adds error handling for parsing integer, float and boolean
-Anything? parseValue(ValueDeclaration declaration, String|[String+] verbatim) {
-	value annotation = annotations(`CreatorAnnotation`, declaration);
-	switch (verbatim)
-	case (is String) {
-		value childOpenType = declaration.openType;
-		if (exists annotation) {
-			// uses the creator
-			value creator = annotation.creator.apply<Object, [String]>();
-			return creator.apply(verbatim);			
-		} else {
-			assert(is OpenClassOrInterfaceType childOpenType);
-			return parseSingleValue(declaration.name, childOpenType.declaration, verbatim);
-		}			
-	}
-	case (is [String+]) {
-		if (exists annotation) {
-			value creator = annotation.creator.apply<Object, [[String+]]>();
-			return creator.apply(*verbatim);
-		} else {
-			return parseMultipleValue(declaration, verbatim);
-		}
-	}
+Anything|ParseException parseValue(ValueDeclaration declaration, String|[String+] verbatim) {
+    try {
+        value annotation = annotations(`CreatorAnnotation`, declaration);
+        switch (verbatim)
+        case (is String) {
+            value childOpenType = declaration.openType;
+            if (exists annotation) {
+                // uses the creator
+                value creator = annotation.creator.apply<Object, [String]>();
+                return creator.apply(verbatim);			
+            } else {
+                assert(is OpenClassOrInterfaceType childOpenType);
+                return parseSingleValue(declaration.name, childOpenType.declaration, verbatim);
+            }			
+        }
+        case (is [String+]) {
+            if (exists annotation) {
+                value creator = annotation.creator.apply<Object, [[String+]]>();
+                return creator.apply(*verbatim);
+            } else {
+                return parseMultipleValue(declaration, verbatim);
+            }
+        }
+    } catch(ParseException e) {
+        return e;
+    }
 }
 
 [Object*] parseMultipleValue(ValueDeclaration declaration, [String+] verbatim) {
@@ -63,24 +72,35 @@ Object? parseSingleValue(String name, ClassOrInterfaceDeclaration type, String v
 	if (subDeclarationOf(type,`class String`)) {
 		return verbatim;
 	} else if (subDeclarationOf(type,`class Integer`)) {
-		return Integer.parse(verbatim);
+		value result = Integer.parse(verbatim);
+		if (is ParseException result) {
+			throw result;
+		}
+		return result;
 	} else if (subDeclarationOf(type,`class Float`)) {
-		return Integer.parse(verbatim);
+		value result = Float.parse(verbatim);
+		if (is ParseException result) {
+			throw result;
+		}
+		return result;
 	} else if (subDeclarationOf(type,`class Boolean`)) {
-		return if (verbatim.empty) then true else Boolean.parse(verbatim);
+		value result = if (verbatim.empty) then true else Boolean.parse(verbatim);
+		if (is ParseException result) {
+			throw result;
+		}
+		return result;
 	} else {
 		// searches for a case value
 		// TODO find a class in depth with the given name
-		value caseType = type.caseTypes.find((OpenType elem) {
-			if (is OpenClassType elem) {
-				return verbatim.lowercased == elem.declaration.name.lowercased;				
-			} 
-			return false;
-		});
+		value caseType = type.caseTypes.narrow<OpenClassType>().find((elem) =>
+			verbatim.lowercased == elem.declaration.name.lowercased);
 		
-		if (exists caseType) { return caseType; } 
+		if (exists caseType,
+		      exists caseValue = caseType.declaration.objectValue?.get()) {
+			return caseValue;
+		} 
 		else {
-			throw Exception("Can't instantiate value '``verbatim``' for type '``type``' in ``name``");
+			throw ParseException("Can't instantiate value '``verbatim``' for type '``type``' in ``name``");
 		}
 	} 
 }
@@ -105,8 +125,12 @@ given T satisfies Object
 		// associates parameters to their corresponding field
 		for (parameter in parameters.declarations) {
 			if (verbatimParameterList.empty) {
-				errors.add("Missing parameters for ``parameter.name``");
-				break;
+				if (parameter.defaulted) {
+					continue;
+				} else {
+					errors.add("Missing parameters for ``parameter.name``");
+					break;
+				}
 			}
 			
 			value parameterType = parameter.openType;
@@ -134,7 +158,7 @@ Boolean isBooleanValue(ValueDeclaration option) {
 }
 
 "Parses arguments to construct given type."
-shared [T, [String*]] parseArguments<T>(
+shared T|Info|[String+] parseArguments<T>(
 	[String*] arguments
 ) 
 	given T satisfies Object
@@ -147,6 +171,9 @@ shared [T, [String*]] parseArguments<T>(
 	for (oneValue in type.declaration.memberDeclarations<ValueDeclaration>()) 
 		if (exists option = annotations(`OptionAnnotation`, oneValue)) oneValue -> option
 	];
+
+	// reads options
+	value infos = type.declaration.annotations<InfoAnnotation>();
 	
 	value verbatimOptionMap = HashMap<ValueDeclaration, String>();
 	value verbatimParameterList = ArrayList<String>();
@@ -157,9 +184,9 @@ shared [T, [String*]] parseArguments<T>(
 		variable [String*] tail = arguments;
 		while (true) {
 			// gets the argument
-			value argument = tail[0];
+			value argument = tail.first;
 			// removes argument from list
-			tail = tail.spanFrom(1);
+			tail = tail.rest;
 			
 			if (exists argument) {
 				// analyzes argument 
@@ -181,6 +208,9 @@ shared [T, [String*]] parseArguments<T>(
 					
 					
 					if (longOption) {
+						if (exists info = infos.find((i)=>i.longName == optionName)) {
+							return Info(info.longName);
+						}
 						// searches for one long option
 						value option = options.find((element) => optionName == element.item.longName);
 						if (exists option) {
@@ -190,16 +220,19 @@ shared [T, [String*]] parseArguments<T>(
 									verbatimOptionMap.put(option.key, newArgument);
 									tail = tail.spanFrom(1);
 								} else {
-									errors.add("Option --'``optionName``' needs an argument.");
+									errors.add("Option --'``trimmedOption``' needs an argument.");
 								}
 							} else {
 								verbatimOptionMap.put(option.key, verbatimOption);
 							}
 						} else {
-							errors.add("Option --'``argument``' isn't supported.");
+							errors.add("Option '--``optionName``' isn't supported.");
 						}
 						
 					} else {
+						if (exists info = infos.find((i)=>String({i.shortName}) == optionName)) {
+							return Info(info.longName);
+						}
 						// searches for short options
 						variable String neededArgument = verbatimOption;
 						for (oneShortOption in optionName) {
@@ -218,7 +251,7 @@ shared [T, [String*]] parseArguments<T>(
 									verbatimOptionMap.put(option.key, neededArgument);
 								}
 							} else {
-								errors.add("Option -'``argument``' isn't supported.");
+								errors.add("Option '-``oneShortOption``' isn't supported.");
 							}
 						}
 					}
@@ -232,13 +265,32 @@ shared [T, [String*]] parseArguments<T>(
 	}
 	// reads parameters
 	value verbatimParameterMap=verbatimParameters(type, verbatimParameterList, errors);
+	
+	function parse(ValueDeclaration declaration, String|[String+] verbatim) {
+		value result = parseValue(declaration, verbatim);
+        if (is ParseException result) {
+            errors.add(result.message);
+            return null;
+        } else {
+            return result;
+        }
+	}
+	
 	value namedArguments = [
 		for (decl->verbatim in concatenate(verbatimOptionMap, verbatimParameterMap))
-			if (exists parsed = parseValue(decl, verbatim))
-				decl.name -> parsed
+	       if (exists parsed = parse(decl, verbatim))
+		        decl.name -> parsed
 	];
-	return [
-		type.namedApply(namedArguments), 
-		errors.sequence()
-	];	
+	
+	for(val->annot in options) {
+		if(! val.defaulted && ! val.name in namedArguments*.key) {
+			errors.add("Option '--``annot.longName``' is mandatory.");
+		}
+	}
+
+	if (nonempty errorSeq = errors.sequence()) {
+		return errorSeq; 
+	} else {
+		return type.namedApply(namedArguments); 
+	}
 }

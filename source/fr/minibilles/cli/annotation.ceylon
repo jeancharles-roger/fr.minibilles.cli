@@ -1,7 +1,7 @@
 import ceylon.language.meta.declaration {
-	FunctionDeclaration,
-	ValueDeclaration,
-	ClassDeclaration
+    FunctionDeclaration,
+    ValueDeclaration,
+    ClassDeclaration
 }
 
 "Annotation for an option."
@@ -59,3 +59,43 @@ shared final annotation class CreatorAnnotation(
 shared annotation CreatorAnnotation creator(FunctionDeclaration creator)
 		=> CreatorAnnotation(creator);
 
+"Annotation for info."
+shared final annotation class InfoAnnotation(shared String description, shared String longName, shared Character shortName = '\0')
+        satisfies SequencedAnnotation<InfoAnnotation, ClassDeclaration> 
+        {
+    shared actual String string => 
+            "--``longName``=value" +
+            (if (!shortName == '\0') then " | -``shortName`` value" else "");
+}
+
+"""Defines an `info` option.
+   An `info` option is a boolean switch that requests
+   information about the program instead of running it.
+   
+   This annotation is added on the Class iteslf
+   
+   All other options of the Class are ignored.
+   
+   Example:
+   ```
+     info ("Shows this help", "help", 'h')
+     class Program(
+     ...
+     ) {}
+   ```
+   """
+shared annotation InfoAnnotation info(String description, String longName, Character shortName = '\0')
+        => InfoAnnotation(description, longName, shortName);
+
+
+"Annotation for AdditionalDoc."
+shared final annotation class AdditionalDocAnnotation(shared ValueDeclaration docProvider)
+        satisfies OptionalAnnotation<AdditionalDocAnnotation, ClassDeclaration> {
+}
+
+"""
+   Allows adding some additional documentation
+   after the main description of the program class
+   """
+shared annotation AdditionalDocAnnotation additionalDoc(ValueDeclaration docProvider)
+        => AdditionalDocAnnotation(docProvider);
