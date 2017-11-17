@@ -126,7 +126,6 @@ shared Path source = parsePath("/")
 
 # Known limitations
 
-- Multiple value can only be `[String*]` for now (will be fixed later on).
 - In the `parameters` list the first sequential value found will use all the remaining arguments.
 - Multiple parameters must be of type `Sequential`, `Iterable` isn't supported.
 - Inheritance declaration haven't been tested (to be done).
