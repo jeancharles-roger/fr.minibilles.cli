@@ -75,14 +75,20 @@
    ```
    Usage: example1 [options] [files]
      Simple example for command line
+
    where:
-      - --show=value | -s value: Show some lines
-      - --help | -h : Show this help
-      - --version | -v : Presents the program version
+     	-s value, --show=value
+   		Show some lines
+
+     -h, --help
+   		Show this help
+
+     -v, --version
+   		Presents the program version
    Executing test with Example1:
    -showLine: 10
    -files: [file1.txt, file2.txt]
-   Version 0.2.1
+   Version 0.2.2
    ```
    
    To print the help for a given class just use:
@@ -90,7 +96,9 @@
    ```ceylon
    print(help<Example1>("example1"))
    ```
-   
+
+   **Inheritance** is supported, there is an example [here](https://github.com/jeancharles-roger/fr.minibilles.cli/blob/master/source/examples/fr/minibilles/cli/inheritance.ceylon).
+
    # Supported types
    
    Here are the supported types:
@@ -127,7 +135,6 @@
    
    - In the `parameters` list the first sequential value found will use all the remaining arguments.
    - Multiple parameters must be of type `Sequential`, `Iterable` isn't supported.
-   - Inheritance declaration haven't been tested (to be done).
    - Case object won't be correctly printed for the help (todo).
    
    # Things to come
@@ -144,6 +151,6 @@
    - [Server2](https://github.com/jeancharles-roger/fr.minibilles.cli/blob/master/source/examples/fr/minibilles/cli/server2.ceylon)
 """
 // TODO add check options 
-module fr.minibilles.cli "0.2.1" {
+module fr.minibilles.cli "0.2.2" {
 	import ceylon.collection "1.3.3";
 }
