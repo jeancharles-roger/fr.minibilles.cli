@@ -77,7 +77,7 @@ shared String help<T>(String programName) given T satisfies Object {
 	};
 	
 	value infosPrint = [
-    	for (info in type.declaration.annotations<InfoAnnotation>()) 
+    	for (info in infoAnnotations(type.declaration))
 	        "``infoPrettyString(info)``\n``tabbedString(info.description)``"
 	];
 	

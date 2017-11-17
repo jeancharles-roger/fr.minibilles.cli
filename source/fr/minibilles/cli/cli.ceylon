@@ -10,7 +10,8 @@ import ceylon.language.meta.declaration {
     ValueDeclaration,
     OpenClassOrInterfaceType,
     ClassOrInterfaceDeclaration,
-    OpenClassType
+    OpenClassType,
+    ClassDeclaration
 }
 import ceylon.language.meta.model {
     Class
@@ -22,7 +23,6 @@ shared final class Info(shared String longName) {
     string => "Info: ``longName``";
 }
 
-// TODO adds error handling for parsing integer, float and boolean
 Anything|ParseException parseValue(ValueDeclaration declaration, String|[String+] verbatim) {
     try {
         value annotation = annotations(`CreatorAnnotation`, declaration);
@@ -66,7 +66,6 @@ Anything|ParseException parseValue(ValueDeclaration declaration, String|[String+
 }
 
 
-// TODO adds error handling for parsing integer, float and boolean
 Object? parseSingleValue(String name, ClassOrInterfaceDeclaration type, String verbatim) {
 	// parses the verbatim
 	if (subDeclarationOf(type,`class String`)) {
@@ -157,6 +156,20 @@ Boolean isBooleanValue(ValueDeclaration option) {
 	return if (is OpenClassOrInterfaceType openType = option.openType) then openType.declaration == `class Boolean` else false;
 }
 
+"Collects info annotations for a class and it's extended classes"
+[InfoAnnotation*] infoAnnotations(ClassDeclaration declaration) =>
+	let (currentInfos = declaration.annotations<InfoAnnotation>())
+		if (exists extendedType = declaration.extendedType)
+			then infoAnnotations(extendedType.declaration).append(currentInfos)
+			else currentInfos;
+
+"Collects parameters annotations for a class and it's extended classes"
+[ParametersAnnotation*] parametersAnnotations(ClassDeclaration declaration) =>
+		let (currentInfos = declaration.annotations<ParametersAnnotation>())
+		if (exists extendedType = declaration.extendedType)
+			then parametersAnnotations(extendedType.declaration).append(currentInfos)
+			else currentInfos;
+
 "Parses arguments to construct given type."
 shared T|Info|[String+] parseArguments<T>(
 	[String*] arguments
@@ -173,7 +186,7 @@ shared T|Info|[String+] parseArguments<T>(
 	];
 
 	// reads options
-	value infos = type.declaration.annotations<InfoAnnotation>();
+	value infos = infoAnnotations(type.declaration);
 	
 	value verbatimOptionMap = HashMap<ValueDeclaration, String>();
 	value verbatimParameterList = ArrayList<String>();

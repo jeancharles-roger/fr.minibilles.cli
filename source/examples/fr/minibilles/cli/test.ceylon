@@ -1,19 +1,20 @@
-import fr.minibilles.cli {
-	option,
-	parameters,
-	help,
-	optionsAndParameters,
-	parseArguments,
-    Info,
-    info
-}
-import ceylon.test {
-	assertEquals,
-	test,
-    assertTrue
-}
 import ceylon.language.meta.model {
     Class
+}
+import ceylon.test {
+    assertEquals,
+    test,
+    assertTrue
+}
+
+import fr.minibilles.cli {
+    option,
+    parameters,
+    help,
+    optionsAndParameters,
+    parseArguments,
+    Info,
+    info
 }
 
 "Simple example for command line"
@@ -68,14 +69,14 @@ shared void testArguments<T>([String*] arguments, T|Info|[String+] expected) giv
 	print("--- ``typeName<T>()`` for ``arguments`` ---");
 	value result = parseArguments<T>(arguments);
 	switch(result)
-	case(is Test) {
-		print(optionsAndParameters(result));
-	}
 	case(is Info) {
 		print("Info: ``result.longName``");
 	}
-	else {
+	case (is [String+]) {
 		print("Errors: ``result``");
+	}
+	else {
+		print(optionsAndParameters(result));
 	}
 	assertEquals(result, expected);
 }
