@@ -36,13 +36,21 @@ import ceylon.language.meta.model {
 	return concatenate(optionsPrint, parametersPrint).fold(type.declaration.name+":")((a,i) => a +"\n"+ i);
 }
 
-String prettyPrintShortName(Character shortName) => if (!shortName == '\0') then " | -``shortName`` " else "";
-        
-String optionPrettyString(ValueDeclaration declaration, OptionAnnotation option) {
-	return if (isBooleanValue(declaration)) then
-		"--``option.longName``" + prettyPrintShortName(option.shortName) else 
-		"--``option.longName``=value" + (if (!option.shortName == '\0') then " | -``option.shortName`` value" else "");
-}
+String tabbedString(String source) => "\t\t``source.replace("\n", "\n\t\t")``";
+
+String prettyPrintShortName(Character shortName, Boolean hasValue = true) =>
+	let (v = if (hasValue) then " value" else "")
+		if (!shortName == '\0') then "-``shortName````v``, " else "";
+
+String prettyPrintLongName(String longName, Boolean hasValue = true) =>
+	"--``longName````if (hasValue) then "=value" else ""``";
+
+String optionPrettyString(ValueDeclaration declaration, OptionAnnotation option) =>
+	let (hasValue = !isBooleanValue(declaration))
+		prettyPrintShortName(option.shortName, hasValue) + prettyPrintLongName(option.longName, hasValue);
+
+String infoPrettyString(InfoAnnotation info) =>
+		prettyPrintShortName(info.shortName, false) + prettyPrintLongName(info.longName, false);
 
 shared String help<T>(String programName) given T satisfies Object {
 	value type = `T`;
@@ -62,21 +70,21 @@ shared String help<T>(String programName) given T satisfies Object {
 			if (exists option = annotations(`OptionAnnotation`, oneValue)) option -> oneValue 
 	];
 	
-	// TODO handle spaces before new line for lisibility
 	value optionsPrint = {
 		for (option in options) 
-			"  - ``optionPrettyString(option.item, option.key)``: " + 
-			(if (exists doc = annotations(`DocAnnotation`, option.item)) then doc.description else "")
+			"\t``optionPrettyString(option.item, option.key)``\n" +
+			tabbedString(if (exists doc = annotations(`DocAnnotation`, option.item)) then doc.description else "")
 	};
 	
 	value infosPrint = [
     	for (info in type.declaration.annotations<InfoAnnotation>()) 
-	        "  - --`` info.longName + prettyPrintShortName(info.shortName) ``: `` info.description``"
+	        "``infoPrettyString(info)``\n``tabbedString(info.description)``"
 	];
 	
 	return "Usage: ``programName`` [options]``parametersPrint``
 	          ``general + additionalDoc``
+
 	        where:
-	        ``"\n".join(concatenate(optionsPrint, infosPrint).map((l)=>"  " + l))``";
+	        ``"\n\n".join(concatenate(optionsPrint, infosPrint).map((l)=>"  " + l))``";
 	
 }
