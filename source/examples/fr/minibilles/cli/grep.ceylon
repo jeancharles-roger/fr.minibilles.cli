@@ -1,14 +1,17 @@
 import ceylon.test {
-	test
+    test
 }
 
 import fr.minibilles.cli {
-	option,
-	parameters,
-	optionsAndParameters
+    option,
+    info,
+    parameters,
+    optionsAndParameters
 }
 
 "Grep class that defines options and parameters like the unix grep command."
+info("Print a brief help message.", "help")
+info("Display version information and exit.", "version", 'V')
 parameters({`value pattern`, `value files`})
 shared class Grep(
 	"Pattern to search"
