@@ -6,6 +6,7 @@ import fr.minibilles.cli {
     option,
     info,
     creator,
+    parameters,
     optionsAndParameters
 }
 
@@ -14,11 +15,14 @@ import fr.minibilles.cli {
 "Base options"
 info("Shows help", "help", 'h')
 info("Shows version", "version", 'v')
+parameters({`value files`})
 shared class BaseOptions(
 
-    "Files to process"
-    option("files", 'f') creator(`function parseFile`)
-    shared {String*} files = []
+    "Map files"
+    option("map", 'm') creator(`function parseFile`)
+    shared {String*} map = [],
+
+    shared [String*] files = []
 
 ) { }
 
@@ -29,9 +33,9 @@ shared class ProgOptions(
     option("pattern", 'p')
     shared String pattern = "",
 
-    {String*} files = []
-
-) extends BaseOptions(files) {
+    {String*} map = [],
+    [String*] files = []
+) extends BaseOptions(map, files) {
 
     shared actual Boolean equals(Object other) {
         // TODO really bad
@@ -50,4 +54,7 @@ shared test void testProg1() =>
     testArguments(["-p", "myPattern"], ProgOptions {pattern = "myPattern";});
 
 shared test void testProg2() =>
-    testArguments(["-f", "file1"], ProgOptions {files = {"file1"};});
+    testArguments(["-m", "source1"], ProgOptions {map = {"source1"};});
+
+shared test void testProg3() =>
+    testArguments(["-m", "source1", "file1", "file2"], ProgOptions {map = {"source1"}; files= ["file1", "file2"];});
