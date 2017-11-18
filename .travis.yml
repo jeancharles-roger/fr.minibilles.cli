@@ -8,3 +8,5 @@ cache:
   directories:
     - $HOME/.ceylon/cache/
     - $HOME/.ceylon/dists/
+notifications:
+  slack: minibilles:2dXpzGnWFnhbU9WrAEwIPn7g
