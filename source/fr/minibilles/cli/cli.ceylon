@@ -17,12 +17,14 @@ import ceylon.language.meta.model {
     Class
 }
 
+"An Info instance is given as result when an `info()` option is found."
 shared final class Info(shared String longName) {
     equals(Object that) => if (is Info that) then longName.equals(that.longName) else false;
     shared actual Integer hash => longName.hash;
     string => "Info: ``longName``";
 }
 
+"Parses a verbatim string (single or sequential) to a given type"
 Anything|ParseException parseValue(ValueDeclaration declaration, String|[String+] verbatim) {
     try {
         value annotation = annotations(`CreatorAnnotation`, declaration);
@@ -51,6 +53,7 @@ Anything|ParseException parseValue(ValueDeclaration declaration, String|[String+
     }
 }
 
+"Parses a sequential verbatim strings to a given type"
 [Object*] parseMultipleValue(ValueDeclaration declaration, [String+] verbatim) {
 	// parses the verbatim
 	value childOpenType = declaration.openType;
@@ -65,7 +68,7 @@ Anything|ParseException parseValue(ValueDeclaration declaration, String|[String+
 	}
 }
 
-
+"Parses a verbatim string to a given type"
 Object? parseSingleValue(String name, ClassOrInterfaceDeclaration type, String verbatim) {
 	// parses the verbatim
 	if (subDeclarationOf(type,`class String`)) {
@@ -104,6 +107,7 @@ Object? parseSingleValue(String name, ClassOrInterfaceDeclaration type, String v
 	} 
 }
 
+"Checks if `subtype` if a child of `superType`"
 Boolean subDeclarationOf(ClassOrInterfaceDeclaration subType, ClassOrInterfaceDeclaration superType) {
 	if (subType == superType) { return true; }
 	value extendedType = subType.extendedType;
@@ -114,6 +118,7 @@ Boolean subDeclarationOf(ClassOrInterfaceDeclaration subType, ClassOrInterfaceDe
 	return false;
 }
 
+"Associates a list of arguments with the a `parameters()` annotation"
 Map<ValueDeclaration,String|[String+]> verbatimParameters<T>
 	(Class<T> type, MutableList<String> verbatimParameterList, MutableList<String> errors)
 given T satisfies Object 
@@ -152,6 +157,7 @@ given T satisfies Object
 	return verbatimParameterMap;
 }
 
+"Checks if value type is Boolean"
 Boolean isBooleanValue(ValueDeclaration option) {
 	return if (is OpenClassOrInterfaceType openType = option.openType) then openType.declaration == `class Boolean` else false;
 }
