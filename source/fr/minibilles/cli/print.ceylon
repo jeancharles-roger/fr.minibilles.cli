@@ -8,6 +8,7 @@ import ceylon.language.meta.model {
     Class
 }
 
+"Prints options and parameters for given object"
  shared String optionsAndParameters<T>(T source) given T satisfies Object {
 	value type = `T`;
 	assert(is Class<T> type);
@@ -36,6 +37,7 @@ import ceylon.language.meta.model {
 	return concatenate(optionsPrint, parametersPrint).fold(type.declaration.name+":")((a,i) => a +"\n"+ i);
 }
 
+"Adds double tab for all new lines"
 String tabbedString(String source) => "\t\t``source.replace("\n", "\n\t\t")``";
 
 String prettyPrintShortName(Character shortName, Boolean hasValue = true) =>
@@ -52,18 +54,24 @@ String optionPrettyString(ValueDeclaration declaration, OptionAnnotation option)
 String infoPrettyString(InfoAnnotation info) =>
 		prettyPrintShortName(info.shortName, false) + prettyPrintLongName(info.longName, false);
 
+"Construct help string for given class"
 shared String help<T>(String programName) given T satisfies Object {
 	value type = `T`;
 	assert(is Class<T> type);
 	
-	value general = if (exists doc = annotations(`DocAnnotation`, type.declaration)) then doc.description else "";
-	
-	value additionalDoc = if (exists doc = annotations(`AdditionalDocAnnotation`, type.declaration)) then "\n``doc.docProvider.get()?.string else ""``" else "";
+	value general =
+		if (exists doc = annotations(`DocAnnotation`, type.declaration))
+		then doc.description else "";
+
+	value additionalDoc =
+		if (exists doc = annotations(`AdditionalDocAnnotation`, type.declaration))
+		then "\n``doc.docProvider.get()?.string else ""``" else "";
 	
 	value parameters = annotations(`ParametersAnnotation`, type.declaration);
-	value parametersPrint = if (exists parameters) then 
-		parameters.declarations.fold(" [--] ")((a,p) => " [" + p.name + "]") else
-		"";
+	value parametersPrint =
+		if (exists parameters)
+		then parameters.declarations.fold(" [--] ")((a,p) => " [" + p.name + "]")
+		else "";
 	
 	value options = [
 		for (oneValue in type.declaration.memberDeclarations<ValueDeclaration>()) 
@@ -86,5 +94,4 @@ shared String help<T>(String programName) given T satisfies Object {
 
 	        where:
 	        ``"\n\n".join(concatenate(optionsPrint, infosPrint).map((l)=>"  " + l))``";
-	
 }
