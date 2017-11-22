@@ -178,7 +178,7 @@
    - [Server1](https://github.com/jeancharles-roger/fr.minibilles.cli/blob/master/source/examples/fr/minibilles/cli/server1.ceylon)
    - [Server2](https://github.com/jeancharles-roger/fr.minibilles.cli/blob/master/source/examples/fr/minibilles/cli/server2.ceylon)
 """
-module fr.minibilles.cli "0.2.2" {
+module fr.minibilles.cli "0.3.0" {
 	import ceylon.collection "1.3.3";
 	import ceylon.json "1.3.3";
 }
