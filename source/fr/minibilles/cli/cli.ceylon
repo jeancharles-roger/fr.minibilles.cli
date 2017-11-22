@@ -3,6 +3,12 @@ import ceylon.collection {
     ArrayList,
     MutableList
 }
+import ceylon.json {
+    parse,
+    JsonObject,
+    JsonArray,
+    Value
+}
 import ceylon.language.meta {
     annotations
 }
@@ -105,6 +111,78 @@ Object? parseSingleValue(String name, ClassOrInterfaceDeclaration type, String v
 			throw ParseException("Can't instantiate value '``verbatim``' for type '``type``' in ``name``");
 		}
 	} 
+}
+
+Anything? safeParse(ValueDeclaration declaration, String|[String+] verbatim, MutableList<String> errors) {
+	value result = parseValue(declaration, verbatim);
+	if (is ParseException result) {
+		errors.add(result.message);
+		return null;
+	} else {
+		return result;
+	}
+}
+
+Anything? safeTranslate(ValueDeclaration declaration, Value|[String+] verbatim, MutableList<String> errors) {
+	assert(is OpenClassOrInterfaceType openType = declaration.openType);
+	value type = openType.declaration;
+
+	switch (verbatim)
+	case (is String) {
+		return safeParse(declaration, verbatim, errors);
+	}
+	case (is [String+]) {
+		return safeParse(declaration, verbatim, errors);
+	}
+	case (is Boolean) {
+		if (subDeclarationOf(type,`class Boolean`)) {
+			return verbatim;
+		} else {
+			errors.add("Option needs a '``type``' found a boolean");
+		}
+	}
+	case (is Integer ) {
+		if (subDeclarationOf(type,`class Integer`)) {
+			return verbatim;
+		} else {
+			errors.add("Option needs a '``type``' found an integer");
+		}
+	}
+	case (is Float) {
+		if (subDeclarationOf(type,`class Float`)) {
+			return verbatim;
+		} else {
+			errors.add("Option needs a '``type``' found a float");
+		}
+	}
+	case (is JsonArray) {
+		return [for (child in verbatim) safeTranslate(declaration, child, errors)];
+	}
+	else {
+		errors.add("Can't translate ``if(exists verbatim) then verbatim else "null"``");
+	}
+	return null;
+}
+
+"Transforms the json value into a string sequence"
+[String*] toStringSequence(Value source) {
+	switch (source)
+	case (is String) {
+		return [source];
+	}
+	case (is JsonArray) {
+		value result = ArrayList<String>();
+		for (child in source) {
+			result.addAll(toStringSequence(child));
+		}
+		return result.sequence();
+	}
+	case (is Null) {
+		return [];
+	}
+	else {
+		return [source.string];
+	}
 }
 
 "Checks if `subtype` if a child of `superType`"
@@ -224,8 +302,7 @@ shared T|Info|[String+] parseArguments<T>(
 						if (exists equalsIndex) 
 							then [trimmedOption.spanTo(equalsIndex-1), trimmedOption.spanFrom(equalsIndex+1)] 
 							else [trimmedOption, ""]; 
-					
-					
+
 					if (longOption) {
 						if (exists info = infos.find((i)=>i.longName == optionName)) {
 							return Info(info.longName);
@@ -284,20 +361,10 @@ shared T|Info|[String+] parseArguments<T>(
 	}
 	// reads parameters
 	value verbatimParameterMap=verbatimParameters(type, verbatimParameterList, errors);
-	
-	function parse(ValueDeclaration declaration, String|[String+] verbatim) {
-		value result = parseValue(declaration, verbatim);
-        if (is ParseException result) {
-            errors.add(result.message);
-            return null;
-        } else {
-            return result;
-        }
-	}
-	
+
 	value namedArguments = [
 		for (decl->verbatim in concatenate(verbatimOptionMap, verbatimParameterMap))
-	       if (exists parsed = parse(decl, verbatim))
+	       if (exists parsed = safeParse(decl, verbatim, errors))
 		        decl.name -> parsed
 	];
 	
@@ -311,5 +378,67 @@ shared T|Info|[String+] parseArguments<T>(
 		return errorSeq; 
 	} else {
 		return type.namedApply(namedArguments); 
+	}
+}
+
+shared T|Info|[String+] parseJson<T>(String json)
+	given T satisfies Object
+{
+	value type = `T`;
+	assert(is Class<T> type);
+
+	// reads options
+	value options = [
+		for (oneValue in type.declaration.memberDeclarations<ValueDeclaration>())
+			if (exists option = annotations(`OptionAnnotation`, oneValue)) oneValue -> option
+	];
+
+	value infos = infoAnnotations(type.declaration);
+
+	value verbatimOptionMap = HashMap<ValueDeclaration, Value>();
+	value verbatimParameterList = ArrayList<String>();
+	value errors = ArrayList<String>();
+
+	value source = parse(json);
+	assert(is JsonObject source);
+	for (item in source) {
+		value name = item.key;
+
+		if (name == "--") {
+			// found parameters list
+			verbatimParameterList.addAll(toStringSequence(item.item));
+
+		} else if (exists info = infos.find((i)=>i.longName == name)) {
+			return Info(info.longName);
+		} else {
+			value option = options.find((element) => element.item.longName == name);
+			if (exists option) {
+				verbatimOptionMap.put(option.key, item.item);
+			} else {
+				errors.add("Option '``name``' isn't supported.");
+			}
+		}
+	}
+
+	// reads parameters
+	value verbatimParameterMap=verbatimParameters(type, verbatimParameterList, errors);
+
+	value namedArguments = [
+		//for (decl->verbatim in verbatimOptionMap)
+		for (decl->verbatim in concatenate(verbatimOptionMap, verbatimParameterMap))
+			if (exists parsed = safeTranslate(decl, verbatim, errors))
+		decl.name -> parsed
+	];
+
+	for(val->annot in options) {
+		if(! val.defaulted && ! val.name in namedArguments*.key) {
+			errors.add("Option '--``annot.longName``' is mandatory.");
+		}
+	}
+
+	if (nonempty errorSeq = errors.sequence()) {
+		return errorSeq;
+	} else {
+		return type.namedApply(namedArguments);
 	}
 }

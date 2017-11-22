@@ -153,4 +153,5 @@
 // TODO add check options 
 module fr.minibilles.cli "0.2.2" {
 	import ceylon.collection "1.3.3";
+	import ceylon.json "1.3.3";
 }
