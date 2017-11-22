@@ -1,3 +1,7 @@
+import ceylon.json {
+    JsonObject,
+    JsonArray
+}
 import ceylon.test {
     test
 }
@@ -8,6 +12,7 @@ import fr.minibilles.cli {
     help,
     optionsAndParameters,
     parseArguments,
+    parseJson,
     Info,
     info
 }
@@ -26,9 +31,11 @@ shared class Example1(
 ) { }
 
 
-shared void example1([String*] args) {
+void example1([String*]|JsonObject args) {
     // parses some arguments
-    value result = parseArguments<Example1>(args);
+    value result = switch(args)
+    case (is [String*]) parseArguments<Example1>(args)
+    case (is JsonObject) parseJson<Example1>(args.string);
 
     switch (result)
     case (is Example1) {
@@ -52,8 +59,14 @@ shared void example1([String*] args) {
     }
 }
 
-shared test void testExample1() {
+test void testExample1() {
     example1(["-h"]);
     example1(["--show", "10", "file1.txt", "file2.txt"]);
     example1(["--version"]);
+}
+
+test void testExample1Json() {
+    example1(JsonObject{"help" -> true});
+    example1(JsonObject{"show" -> 10, "--" -> JsonArray{"files1.txt", "file2.txt"}});
+    example1(JsonObject{"version" -> true});
 }

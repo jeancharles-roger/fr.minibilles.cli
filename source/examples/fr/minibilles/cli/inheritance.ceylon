@@ -1,3 +1,7 @@
+import ceylon.json {
+    JsonObject,
+    JsonArray
+}
 import ceylon.test {
     test
 }
@@ -52,9 +56,21 @@ shared test void testProgHelp() => testHelp<ProgOptions>();
 
 shared test void testProg1() =>
     testArguments(["-p", "myPattern"], ProgOptions {pattern = "myPattern";});
+shared test void testProg1Json() =>
+    testJson(JsonObject{"pattern" -> "myPattern"}, ProgOptions {pattern = "myPattern";});
 
 shared test void testProg2() =>
     testArguments(["-m", "source1"], ProgOptions {map = {"source1"};});
+shared test void testProg2Json() =>
+    testJson(JsonObject{"map" -> "source1"}, ProgOptions {map = {"source1"};});
 
 shared test void testProg3() =>
-    testArguments(["-m", "source1", "file1", "file2"], ProgOptions {map = {"source1"}; files= ["file1", "file2"];});
+    testArguments(
+        ["-m", "source1", "file1", "file2"],
+        ProgOptions {map = {"source1"}; files= ["file1", "file2"];}
+    );
+shared test void testProg3Json() =>
+    testJson(
+        JsonObject{ "map" -> "source1", "--" -> JsonArray{"file1", "file2"}},
+        ProgOptions {map = {"source1"}; files= ["file1", "file2"];}
+    );

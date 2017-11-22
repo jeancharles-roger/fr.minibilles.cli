@@ -1,3 +1,6 @@
+import ceylon.json {
+    JsonObject
+}
 import ceylon.test {
     test
 }
@@ -34,5 +37,6 @@ shared String resourceCenterDirectory = "./rc"
 }
 
 shared test void testServer2NoArgument() => testArguments([],Server2 {});
+shared test void testServer2EmptyJson() => testJson(JsonObject{},Server2 {});
 
 shared test void testServer2Help() => testHelp<Server2>();

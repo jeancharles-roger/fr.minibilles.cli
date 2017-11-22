@@ -8,6 +8,10 @@ import fr.minibilles.cli {
     parameters,
     optionsAndParameters
 }
+import ceylon.json {
+    JsonObject,
+    JsonArray
+}
 
 "Grep class that defines options and parameters like the unix grep command."
 info("Print a brief help message.", "help")
@@ -85,10 +89,21 @@ shared test void testGrepSimplest() =>
 		["toto", "file1.txt"], 
 		Grep{pattern = "toto"; files = ["file1.txt"];}
 	);
-		
+shared test void testGrepSimplestJson() =>
+	testJson(
+		JsonObject{"--" -> JsonArray{"toto", "file1.txt"}},
+		Grep{pattern = "toto"; files = ["file1.txt"];}
+	);
+
 shared test void testGrepTwoFiles() =>
 	testArguments(
 		["toto", "file1.txt", "file2.txt"], 
+		Grep{pattern = "toto"; files = ["file1.txt", "file2.txt"];}
+	);
+
+shared test void testGrepTwoFilesJson() =>
+	testJson(
+		JsonObject{"--" -> JsonArray{"toto", "file1.txt", "file2.txt"}},
 		Grep{pattern = "toto"; files = ["file1.txt", "file2.txt"];}
 	);
 
@@ -98,18 +113,22 @@ shared test void testGrepA3() =>
 		Grep{afterContext = 3; pattern = "toto"; files = ["file1.txt", "file2.txt"];}
 	);
 
-shared test void testGrepAequals3() => 
+shared test void testGrepAequals3() =>
 	testArguments(
 		["-A=3", "toto", "file1.txt", "file2.txt"], 
 		Grep{afterContext = 3; pattern = "toto"; files = ["file1.txt", "file2.txt"];}
 	);
-
 
 shared test void testGrepAfterContext3() => 
 	testArguments(
 		["--after-context", "3", "toto", "file1.txt", "file2.txt"], 
 		Grep{afterContext = 3; pattern = "toto"; files = ["file1.txt", "file2.txt"];}
 	);
+shared test void testGrepAfterContext3Json() =>
+		testJson(
+			JsonObject{"after-context" -> 3, "--" -> JsonArray{"toto", "file1.txt", "file2.txt"}},
+			Grep{afterContext = 3; pattern = "toto"; files = ["file1.txt", "file2.txt"];}
+		);
 
 shared test void testGrepAfterContextEquals3() => 
 		testArguments(
@@ -141,5 +160,11 @@ shared test void testGrepAB() {
 		Grep{afterContext = 5; beforeContext = 5; pattern = "file1.txt"; files = ["file2.txt"];}
 	);
 }
+
+shared test void testGrepA3B5Json() =>
+		testJson(
+			JsonObject{"after-context" -> 1, "before-context" -> 5, "--" -> JsonArray{"toto", "file1.txt", "file2.txt"}},
+			Grep{afterContext = 1; beforeContext = 5; pattern = "toto"; files = ["file1.txt", "file2.txt"];}
+		);
 
 shared test void testGrepHelp() => testHelp<Grep>();

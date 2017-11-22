@@ -1,3 +1,6 @@
+import ceylon.json {
+    JsonObject
+}
 import ceylon.test {
     test
 }
@@ -38,17 +41,32 @@ shared test void testServer1NoArgument() =>
 		[], 
 		Server1 {}
 	);
+shared test void testServer1EmptyJson() =>
+		testJson(
+			JsonObject{},
+			Server1 {}
+		);
 
 shared test void testServer1Assets() =>
-	testArguments(
-		["--assets", "assets"], 
-		Server1 {assetsPath = "assets";}
-	);
+		testArguments(
+			["--assets", "assets"],
+			Server1 {assetsPath = "assets";}
+		);
+shared test void testServer1AssetsJson() =>
+		testJson(
+			JsonObject{ "assets" -> "assets" },
+			Server1 {assetsPath = "assets";}
+		);
 
 shared test void testServer1Repo1() =>
 		testArguments(
 	["--repos", "repo1"], 
 	Server1 {repos = ["repo1"];}
+);
+shared test void testServer1Repo1Json() =>
+	testJson(
+		JsonObject{"repos" -> "repo1"},
+		Server1 {repos = ["repo1"];}
 );
 
 shared test void testServer1Help() => testHelp<Server1>();

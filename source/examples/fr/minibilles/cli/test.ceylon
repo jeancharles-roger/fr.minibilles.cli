@@ -1,3 +1,6 @@
+import ceylon.json {
+    JsonObject
+}
 import ceylon.language.meta.model {
     Class
 }
@@ -13,6 +16,7 @@ import fr.minibilles.cli {
     help,
     optionsAndParameters,
     parseArguments,
+    parseJson,
     Info,
     info
 }
@@ -39,7 +43,7 @@ shared class Test(
 	}
 }
 
-shared void runTest() {
+void runTest() {
 	// prints help
 	print(help<Test>("test"));
 	
@@ -60,12 +64,12 @@ shared void runTest() {
 	 
 }
 
-shared String typeName<T>() given T satisfies Object {
+String typeName<T>() given T satisfies Object {
 	assert(is Class<T> type = `T`);
 	return type.declaration.name;
 }
 
-shared void testArguments<T>([String*] arguments, T|Info|[String+] expected) given T satisfies Object {
+void testArguments<T>([String*] arguments, T|Info|[String+] expected) given T satisfies Object {
 	print("--- ``typeName<T>()`` for ``arguments`` ---");
 	value result = parseArguments<T>(arguments);
 	switch(result)
@@ -81,6 +85,23 @@ shared void testArguments<T>([String*] arguments, T|Info|[String+] expected) giv
 	assertEquals(result, expected);
 }
 
+void testJson<T>(JsonObject json, T|Info|[String+] expected) given T satisfies Object {
+	print("--- ``typeName<T>()`` for ``json`` ---");
+	value result = parseJson<T>(json.string);
+	switch(result)
+	case(is Info) {
+		print("Info: ``result.longName``");
+	}
+	case (is [String+]) {
+		print("Errors: ``result``");
+	}
+	else {
+		print(optionsAndParameters(result));
+	}
+	assertEquals(result, expected);
+}
+
+
 shared void testHelp<T>() given T satisfies Object {
 	print("--- ``typeName<T>()`` for help ---");
 	value helpString = help<T>("testProgram");
@@ -89,9 +110,12 @@ shared void testHelp<T>() given T satisfies Object {
 }
 
 shared test void testNoArguments() => testArguments<Test>(empty, Test());
+shared test void testEmptyJson() => testJson<Test>(JsonObject{}, Test());
 
 shared test void testVersionInfo() => testArguments<Test>(["--version"], Info("version"));
+shared test void testVersionInfoJson() => testJson<Test>(JsonObject{"version" -> true}, Info("version"));
 
 shared test void testHelpInfo() => testArguments<Test>(["--help"], Info("help"));
+shared test void testHelpInfoJson() => testJson<Test>(JsonObject{"help" -> true}, Info("help"));
 
 shared test void testShowHelp() => testHelp<Test>();
