@@ -99,6 +99,33 @@
 
    **Inheritance** is supported, there is an example [here](https://github.com/jeancharles-roger/fr.minibilles.cli/blob/master/source/examples/fr/minibilles/cli/inheritance.ceylon).
 
+   # JSON Support
+
+   `fr.minibilles.cli` supports JSON format to read options.
+   For the previous example, JSON would look like:
+
+   ```json
+   { "help": true }
+   ```
+
+   ```json
+   { "version": true }
+   ```
+
+   ```json
+   {
+     "show": 10,
+     "--": ["file1.txt", "file2.txt"]
+   }
+   ```
+
+   To read the option from JSON use:
+
+   ```ceylon
+   value result = parseJson<Example1>(json);
+   // the result is of the same type as parseArguments()
+   ```
+
    # Supported types
    
    Here are the supported types:
@@ -139,8 +166,9 @@
    
    # Things to come
    
-   - Reads the same options from a JSON configuration file.
-   
+   - Support for `--` to break options parsing
+   - Support for an automatic mode to read options from JSON
+
    # Examples
    
    Here are some examples:
@@ -150,7 +178,6 @@
    - [Server1](https://github.com/jeancharles-roger/fr.minibilles.cli/blob/master/source/examples/fr/minibilles/cli/server1.ceylon)
    - [Server2](https://github.com/jeancharles-roger/fr.minibilles.cli/blob/master/source/examples/fr/minibilles/cli/server2.ceylon)
 """
-// TODO add check options 
 module fr.minibilles.cli "0.2.2" {
 	import ceylon.collection "1.3.3";
 	import ceylon.json "1.3.3";

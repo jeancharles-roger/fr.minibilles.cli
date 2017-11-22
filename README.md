@@ -100,6 +100,33 @@ print(help<Example1>("example1"))
 
 **Inheritance** is supported, there is an example [here](https://github.com/jeancharles-roger/fr.minibilles.cli/blob/master/source/examples/fr/minibilles/cli/inheritance.ceylon).
 
+# JSON Support
+
+`fr.minibilles.cli` supports JSON format to read options. 
+For the previous example, JSON would look like:
+
+```json
+{ "help": true }
+```
+
+```json
+{ "version": true }
+```
+
+```json
+{ 
+  "show": 10, 
+  "--": ["file1.txt", "file2.txt"]
+}
+```
+
+To read the option from JSON use:
+
+```ceylon
+value result = parseJson<Example1>(json);
+// the result is of the same type as parseArguments()
+```
+
 # Supported types
 
 Here are the supported types:
@@ -140,7 +167,8 @@ shared Path source = parsePath("/")
 
 # Things to come
 
-- Reads the same options from a JSON configuration file.
+- Support for `--` to break options parsing
+- Support for an automatic mode to read options from JSON 
 
 # Examples
 
